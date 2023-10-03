@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -57,10 +58,18 @@ public class ProductService {
         }
     }
 
+    //DELETE methods
+    public String deleteProductById(int id) {
+        try {
+            repository.deleteProductById(id);
+            LOG.info(String.format("SUCCESSFULLY deleted product[%s]", id));
+            return String.format("%s - SUCCESSFULLY deleted product[%s]", HttpStatus.OK, id);
+        } catch (Exception e) {
+            LOG.error("Failed to delete product with id[" + id + "]", e);
+            return String.format("%s FAILED due to[%s]",HttpStatus.INTERNAL_SERVER_ERROR , e);
+        }
+    }
     //PUT methods
-
-    //UPDATE methods
-
     public Product saveProduct(Product product) {
         try {
             LOG.info("Attempting to save product[" + product.toString() + "] to DB");
@@ -82,28 +91,20 @@ public class ProductService {
             throw e;
         }
     }
-
-    public String deleteProductById(int id) {
+    //UPDATE methods
+    public String updateProduct(Product product) throws SQLException {
         try {
-            repository.deleteProductById(id);
-            LOG.info(String.format("SUCCESSFULLY deleted product[%s]", id));
-            return String.format("%s - SUCCESSFULLY deleted product[%s]", HttpStatus.OK, id);
+            Product dbProduct = getProductById(product.getId());
+            if(dbProduct != null) {
+                LOG.info("Attempting to update product with id[" + product.getId() + "]");
+                repository.updateProduct(product);
+                return HttpStatus.OK + "-Product[" + product.getId() + "] successfully updated";
+            } else {
+                LOG.error(HttpStatus.INTERNAL_SERVER_ERROR + "-Failed to update product[" + product + "]");
+                return HttpStatus.INTERNAL_SERVER_ERROR + "-Failed to update product[" + product.getId() + "]";
+            }
         } catch (Exception e) {
-            LOG.error("Failed to delete product with id[" + id + "]", e);
-            return String.format("%s FAILED due to[%s]",HttpStatus.INTERNAL_SERVER_ERROR , e);
-        }
-    }
-
-    public Product updateProduct(Product product) {
-        try {
-            /*Product existingProduct = repository.findById(product.getId()).orElse(null);
-            if(existingProduct != null) {
-                existingProduct = product;
-                return repository.save(existingProduct);
-            }*/
-            return null;
-        } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(HttpStatus.INTERNAL_SERVER_ERROR + "-Failed to update product[" + product.getId() + "]", e);
             throw e;
         }
     }

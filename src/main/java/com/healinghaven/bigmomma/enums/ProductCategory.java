@@ -21,4 +21,12 @@ public enum ProductCategory {
         }
         return ProductCategory.OTHER;
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
 }

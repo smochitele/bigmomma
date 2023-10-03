@@ -198,13 +198,61 @@ public class ProductRepository {
 
     public void deleteProductById(int id) throws SQLException {
         try {
-            final String SQL = "UPDATE momma_db.products SET is_active = '0' WHERE id = ? ";
+            final String SQL = "UPDATE momma_db.products SET is_active = '0', last_updated = ? WHERE id = ? ";
             connection = ConnectionFactory.getConnection();
             preparedStatement = connection.prepareStatement(SQL);
-            preparedStatement.setInt(1, id);
+            preparedStatement.setString(1, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
+            preparedStatement.setInt(2, id);
             preparedStatement.execute();
         } catch (Exception e) {
             LOG.error("Failed to delete product with id[" + id + "]", e);
+            throw e;
+        } finally {
+            DatabaseUtil.close(connection, preparedStatement);
+        }
+    }
+
+    public void updateProduct(Product product) throws SQLException {
+        try {
+            product.setLastUpdated(DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
+            final String SQL = "UPDATE momma_db.products " +
+                                "SET name_col = ?," +
+                                    "description_col = ?," +
+                                    "instructions = ?," +
+                                    "color = ?," +
+                                    "price = ?," +
+                                    "best_before = ?," +
+                                    "quantity = ?," +
+                                    "category = ?," +
+                                    "rating = ?," +
+                                    "product_owner = ?," +
+                                    "is_active = ?," +
+                                    "date_added = ?," +
+                                    "last_updated = ? " +
+                                "WHERE id = ?";
+            connection = ConnectionFactory.getConnection();
+            LOG.info("Executing query[" + SQL + "]");
+
+            preparedStatement = connection.prepareStatement(SQL);
+
+            preparedStatement.setString(1, product.getName());
+            preparedStatement.setString(2, product.getDescription());
+            preparedStatement.setString(3, product.getInstructions());
+            preparedStatement.setString(4, product.getColor());
+            preparedStatement.setFloat(5, (float) product.getPrice());
+            preparedStatement.setString(6, product.getBestBefore());
+            preparedStatement.setInt(7, product.getQuantity());
+            preparedStatement.setInt(8, product.getCategory().ordinal());
+            preparedStatement.setFloat(9, (float) product.getRating());
+            preparedStatement.setInt(10, product.getOwner());
+            preparedStatement.setBoolean(11, product.isActive());
+            preparedStatement.setString(12, product.getDateAdded());
+            preparedStatement.setString(13, product.getLastUpdated());
+            preparedStatement.setInt(14, product.getId());
+
+            preparedStatement.execute();
+        } catch (Exception e) {
+            LOG.error("Failed to update product[" + product + "]", e);
             throw e;
         } finally {
             DatabaseUtil.close(connection, preparedStatement);

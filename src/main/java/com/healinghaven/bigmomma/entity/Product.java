@@ -29,6 +29,7 @@ public class Product {
     private String dateAdded;
     private boolean isActive;
     private int owner;
+    private String lastUpdated;
 
     @Override
     public String toString() {
