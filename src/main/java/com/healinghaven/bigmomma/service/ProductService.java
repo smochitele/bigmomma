@@ -69,6 +69,7 @@ public class ProductService {
             return String.format("%s FAILED due to[%s]",HttpStatus.INTERNAL_SERVER_ERROR , e);
         }
     }
+
     //PUT methods
     public String saveProduct(Product product) {
         try {
@@ -89,6 +90,7 @@ public class ProductService {
             throw e;
         }
     }
+
     //UPDATE methods
     public String updateProduct(Product product) throws SQLException {
         try {
