@@ -258,4 +258,86 @@ public class ProductRepository {
             DatabaseUtil.close(connection, preparedStatement);
         }
     }
+
+    public Product saveProduct(Product product) {
+        try {
+            if(product != null) {
+                final String SQL = "INSERT INTO momma_db.products (name_col, description_col, instructions, color, price, best_before, quantity, category, product_owner) " +
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                connection = ConnectionFactory.getConnection();
+                LOG.info("Executing query[" + SQL + "]");
+                preparedStatement = connection.prepareStatement(SQL);
+                preparedStatement.setString(1, product.getName());
+                preparedStatement.setString(2, product.getDescription());
+                preparedStatement.setString(3, product.getInstructions());
+                preparedStatement.setString(4, product.getColor());
+                preparedStatement.setFloat(5, (float) product.getPrice());
+                preparedStatement.setString(6, product.getBestBefore());
+                preparedStatement.setInt(7, product.getQuantity());
+                preparedStatement.setInt(8, product.getCategory().ordinal());
+                preparedStatement.setInt(9, product.getOwner());
+
+                preparedStatement.execute();
+
+                LOG.info("Successfully added product[" + product + "] to DB");
+                return product;
+            } else {
+                LOG.error("Cannot save null product to DB");
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to save product[" + product + "] top DB", e);
+            return null;
+        } finally {
+            DatabaseUtil.close(connection, preparedStatement);
+        }
+    }
+
+    public List<Product> saveAllProducts(List<Product> products) {
+        try {
+            if(products != null) {
+                products.forEach(p -> {
+                    if(p != null) {
+                        final String SQL = "INSERT INTO momma_db.products (name_col, description_col, instructions, color, price, best_before, quantity, category, product_owner) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                        connection = ConnectionFactory.getConnection();
+                        LOG.info("Executing query[" + SQL + "]");
+                        try {
+                            preparedStatement = connection.prepareStatement(SQL);
+
+                            preparedStatement.setString(1, p.getName());
+                            preparedStatement.setString(2, p.getDescription());
+                            preparedStatement.setString(3, p.getInstructions());
+                            preparedStatement.setString(4, p.getColor());
+                            preparedStatement.setFloat(5, (float) p.getPrice());
+                            preparedStatement.setString(6, p.getBestBefore());
+                            preparedStatement.setInt(7, p.getQuantity());
+                            preparedStatement.setInt(8, p.getCategory().ordinal());
+                            preparedStatement.setInt(9, p.getOwner());
+
+                            preparedStatement.execute();
+
+                            LOG.info("Successfully added product[" + p + "] to DB");
+                        } catch (SQLException e) {
+                            LOG.error("Failed to write to DB", e);
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        LOG.error("Found null product in the list, not saving null product to DB");
+                    }
+                });
+                return products;
+            } else {
+                LOG.error("Cannot save null products to DB");
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to save products[" + products + "] to DB");
+            return null;
+        } finally {
+            DatabaseUtil.close(connection, preparedStatement);
+        }
+    }
 }

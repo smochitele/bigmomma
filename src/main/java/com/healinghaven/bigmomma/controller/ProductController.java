@@ -14,13 +14,13 @@ public class ProductController {
     private ProductService service;
 
     @PostMapping("/api/addproduct")
-    public Product addProduct(@RequestBody Product product) {
+    public String addProduct(@RequestBody Product product) {
         return service.saveProduct(product);
     }
 
     @PostMapping("/api/addproducts")
-    public List<Product> addProducts(@RequestBody List<Product> products) {
-        return service.saveProducts(products);
+    public String addProducts(@RequestBody List<Product> products) {
+        return service.saveAllProducts(products);
     }
 
     @GetMapping("/api/getproducts")

@@ -70,22 +70,20 @@ public class ProductService {
         }
     }
     //PUT methods
-    public Product saveProduct(Product product) {
+    public String saveProduct(Product product) {
         try {
-            LOG.info("Attempting to save product[" + product.toString() + "] to DB");
-            //return repository.save(product);
-            return null;
+            LOG.info("Attempting to save product[" + product + "] to DB");
+            return HttpStatus.OK + "-saved product[" + repository.saveProduct(product) + "]";
         } catch (Exception e) {
             LOG.error("Failed to save product[" + product.toString() + "] to DB", e);
             throw e;
         }
     }
 
-    public List<Product> saveProducts(List<Product> products) {
+    public String saveAllProducts(List<Product> products) {
         try {
-            LOG.info("Attempting to save products[" + products.toString() + "] to DB");
-            //return repository.saveAll(products);
-            return null;
+            LOG.info("Attempting to save products[" + products + "] to DB");
+            return HttpStatus.OK + "-saved products[" + repository.saveAllProducts(products) + "]";
         } catch (Exception e) {
             LOG.error("Failed to save product[" + products.toString() + "] to DB", e);
             throw e;
