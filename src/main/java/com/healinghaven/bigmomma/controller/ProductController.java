@@ -5,6 +5,7 @@ import com.healinghaven.bigmomma.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.SQLException;
 import java.util.List;
 
 @RestController
@@ -13,13 +14,13 @@ public class ProductController {
     private ProductService service;
 
     @PostMapping("/api/addproduct")
-    public Product addProduct(@RequestBody Product product) {
+    public String addProduct(@RequestBody Product product) {
         return service.saveProduct(product);
     }
 
     @PostMapping("/api/addproducts")
-    public List<Product> addProducts(@RequestBody List<Product> products) {
-        return service.saveProducts(products);
+    public String addProducts(@RequestBody List<Product> products) {
+        return service.saveAllProducts(products);
     }
 
     @GetMapping("/api/getproducts")
@@ -43,7 +44,7 @@ public class ProductController {
     }
 
     @PutMapping("/api/updateproduct")
-    public Product updateProduct(@RequestBody Product product) {
+    public String updateProduct(@RequestBody Product product) throws SQLException {
         return service.updateProduct(product);
     }
 

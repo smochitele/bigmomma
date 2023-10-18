@@ -1,11 +1,9 @@
 package com.healinghaven.bigmomma.enums;
 
 public enum ProductCategory {
-    CLOTHING("0", "Clothing"),
-    HERBS("1", "Herbs"),
-    CANDLES("2", "Candles"),
-    CONSULTATION("3", "Consultation"),
-    OTHER("3", "Other");
+    PRODUCT("0", "Tangible product"),
+    SERVICE("1", "Intangible product"),
+    OTHER("2", "Uncategorized");
 
     private final String id;
     private String description;
@@ -20,5 +18,13 @@ public enum ProductCategory {
                 return productType;
         }
         return ProductCategory.OTHER;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

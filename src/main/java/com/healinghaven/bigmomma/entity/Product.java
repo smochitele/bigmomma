@@ -6,8 +6,7 @@ import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -24,11 +23,12 @@ public class Product {
     private String bestBefore;
     private int quantity;
     private ProductCategory category;
-    private ArrayList<Image> images;
+    private List<Image> images;
     private double rating;
     private String dateAdded;
     private boolean isActive;
     private int owner;
+    private String lastUpdated;
 
     @Override
     public String toString() {

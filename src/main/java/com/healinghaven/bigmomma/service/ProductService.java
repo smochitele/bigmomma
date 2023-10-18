@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -57,32 +58,7 @@ public class ProductService {
         }
     }
 
-    //PUT methods
-
-    //UPDATE methods
-
-    public Product saveProduct(Product product) {
-        try {
-            LOG.info("Attempting to save product[" + product.toString() + "] to DB");
-            //return repository.save(product);
-            return null;
-        } catch (Exception e) {
-            LOG.error("Failed to save product[" + product.toString() + "] to DB", e);
-            throw e;
-        }
-    }
-
-    public List<Product> saveProducts(List<Product> products) {
-        try {
-            LOG.info("Attempting to save products[" + products.toString() + "] to DB");
-            //return repository.saveAll(products);
-            return null;
-        } catch (Exception e) {
-            LOG.error("Failed to save product[" + products.toString() + "] to DB", e);
-            throw e;
-        }
-    }
-
+    //DELETE methods
     public String deleteProductById(int id) {
         try {
             repository.deleteProductById(id);
@@ -94,16 +70,41 @@ public class ProductService {
         }
     }
 
-    public Product updateProduct(Product product) {
+    //PUT methods
+    public String saveProduct(Product product) {
         try {
-            /*Product existingProduct = repository.findById(product.getId()).orElse(null);
-            if(existingProduct != null) {
-                existingProduct = product;
-                return repository.save(existingProduct);
-            }*/
-            return null;
+            LOG.info("Attempting to save product[" + product + "] to DB");
+            return HttpStatus.OK + "-saved product[" + repository.saveProduct(product) + "]";
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("Failed to save product[" + product.toString() + "] to DB", e);
+            throw e;
+        }
+    }
+
+    public String saveAllProducts(List<Product> products) {
+        try {
+            LOG.info("Attempting to save products[" + products + "] to DB");
+            return HttpStatus.OK + "-saved products[" + repository.saveAllProducts(products) + "]";
+        } catch (Exception e) {
+            LOG.error("Failed to save product[" + products.toString() + "] to DB", e);
+            throw e;
+        }
+    }
+
+    //UPDATE methods
+    public String updateProduct(Product product) throws SQLException {
+        try {
+            Product dbProduct = getProductById(product.getId());
+            if(dbProduct != null) {
+                LOG.info("Attempting to update product with id[" + product.getId() + "]");
+                repository.updateProduct(product);
+                return HttpStatus.OK + "-Product[" + product.getId() + "] successfully updated";
+            } else {
+                LOG.error(HttpStatus.INTERNAL_SERVER_ERROR + "-Failed to update product[" + product + "]");
+                return HttpStatus.INTERNAL_SERVER_ERROR + "-Failed to update product[" + product.getId() + "]";
+            }
+        } catch (Exception e) {
+            LOG.error(HttpStatus.INTERNAL_SERVER_ERROR + "-Failed to update product[" + product.getId() + "]", e);
             throw e;
         }
     }

@@ -1,23 +1,25 @@
 package com.healinghaven.bigmomma.entity;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "images")
 public class Image {
-    @Id
-    @GeneratedValue
-    private int Id;
+    private int id;
+    private int entityId;
+    private String imageName;
     private String base64String;
-    private String url;
+    private String location;
     private double size;
-    private String imageType;
+
+    private String dateAdded;
+    private String fileExtension;
+
+    @Override
+    public String toString() {
+        return String.format("Image{id[%s], imageName[%s], location[%s], size[%s], fileExtension[%s]}", id, imageName, location, size, fileExtension);
+    }
 }
