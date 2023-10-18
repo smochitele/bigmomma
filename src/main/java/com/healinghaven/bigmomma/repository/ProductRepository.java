@@ -8,15 +8,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.healinghaven.bigmomma.enums.ProductCategory;
+import com.healinghaven.bigmomma.service.ImageService;
 import com.healinghaven.bigmomma.utils.DatabaseUtil;
 import com.healinghaven.bigmomma.utils.DateUtil;
+import com.healinghaven.bigmomma.utils.ImageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ProductRepository {
     private static final Logger LOG = LoggerFactory.getLogger(ProductRepository.class);
+
+    @Autowired
+    private ImageService imageService;
     private Connection connection;
     private PreparedStatement preparedStatement;
     private ResultSet resultSet;
@@ -47,6 +53,10 @@ public class ProductRepository {
                     product.setDateAdded(DateUtil.getFullDateFormat(String.valueOf(resultSet.getDate("date_added"))));
                     product.setOwner(resultSet.getInt("product_owner"));
                     product.setActive(resultSet.getBoolean("is_active"));
+
+                    product.setImages(imageService.getEntityImages(product.getId()));
+                    ImageUtil.setBase64StringToImage(product.getImages());
+
                     LOG.info("Returning product[" + product + "]");
                 } else {
                     LOG.info("Product with product id[" + id + "] has been found but has an is_active status of[" + resultSet.getBoolean("is_active") + "]");
@@ -91,6 +101,9 @@ public class ProductRepository {
                     product.setDateAdded(DateUtil.getFullDateFormat(String.valueOf(resultSet.getTimestamp("date_added"))));
                     product.setActive(resultSet.getBoolean("is_active"));
 
+                    product.setImages(imageService.getEntityImages(product.getId()));
+                    ImageUtil.setBase64StringToImage(product.getImages());
+
                     products.add(product);
                 }
             }
@@ -134,6 +147,9 @@ public class ProductRepository {
                     product.setOwner(resultSet.getInt("product_owner"));
                     product.setActive(resultSet.getBoolean("is_active"));
 
+                    product.setImages(imageService.getEntityImages(product.getId()));
+                    ImageUtil.setBase64StringToImage(product.getImages());
+
                     products.add(product);
                 }
             }
@@ -176,6 +192,9 @@ public class ProductRepository {
                     product.setDateAdded(DateUtil.getFullDateFormat(String.valueOf(resultSet.getDate("date_added"))));
                     product.setOwner(resultSet.getInt("product_owner"));
                     product.setActive(resultSet.getBoolean("is_active"));
+
+                    product.setImages(imageService.getEntityImages(product.getId()));
+                    ImageUtil.setBase64StringToImage(product.getImages());
 
                     products.add(product);
                 } else {
@@ -267,7 +286,7 @@ public class ProductRepository {
 
                 connection = ConnectionFactory.getConnection();
                 LOG.info("Executing query[" + SQL + "]");
-                preparedStatement = connection.prepareStatement(SQL);
+                preparedStatement = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
                 preparedStatement.setString(1, product.getName());
                 preparedStatement.setString(2, product.getDescription());
                 preparedStatement.setString(3, product.getInstructions());
@@ -279,6 +298,20 @@ public class ProductRepository {
                 preparedStatement.setInt(9, product.getOwner());
 
                 preparedStatement.execute();
+
+                try {
+                    if(product.getImages() != null) {
+                        preparedStatement = connection.prepareStatement("SELECT LAST_INSERT_ID()", Statement.RETURN_GENERATED_KEYS);
+                        ResultSet rs = preparedStatement.executeQuery();
+                        if(rs.next()) {
+                            int productId = rs.getInt("LAST_INSERT_ID()");
+                            LOG.info("Saving product images for product[" + productId + "]");
+                            imageService.saveImages(product.getImages(), productId);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.info("Error saving images related to product[" + product + "]", e);
+                }
 
                 LOG.info("Successfully added product[" + product + "] to DB");
                 return product;
@@ -318,6 +351,18 @@ public class ProductRepository {
                             preparedStatement.setInt(9, p.getOwner());
 
                             preparedStatement.execute();
+
+                            try {
+                                preparedStatement = connection.prepareStatement("SELECT LAST_INSERT_ID()", Statement.RETURN_GENERATED_KEYS);
+                                ResultSet rs = preparedStatement.executeQuery();
+                                if(rs.next()) {
+                                    int productId = rs.getInt("LAST_INSERT_ID()");
+                                    LOG.info("Saving product images for product[" + productId + "]");
+                                    imageService.saveImages(p.getImages(), productId);
+                                }
+                            } catch (Exception e) {
+                                LOG.info("Error saving images related tp product[" + p + "]");
+                            }
 
                             LOG.info("Successfully added product[" + p + "] to DB");
                         } catch (SQLException e) {
