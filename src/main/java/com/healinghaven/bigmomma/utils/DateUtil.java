@@ -2,7 +2,7 @@ package com.healinghaven.bigmomma.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import io.micrometer.common.util.StringUtils;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -20,37 +20,52 @@ public class DateUtil {
     public static final SimpleDateFormat FULL_DATE_FORMAT = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss.SSS");
 
     public static String getFullDateFormat(String dateInput) {
-        try {
-            Date date = new Date(Long.parseLong(dateInput.trim()));
-            SimpleDateFormat sdf = FULL_DATE_FORMAT;
-            sdf.setTimeZone(TimeZone.getTimeZone("Africa/Johannesburg"));
-            return sdf.format(date);
-        } catch (Exception e) {
-            LOG.error("Error converting the epoch date [" + dateInput + "]");
+        if (dateInput != null && dateInput.chars().allMatch(Character::isDigit)) {
+            try {
+                Date date = new Date(Long.parseLong(dateInput.trim()));
+                SimpleDateFormat sdf = FULL_DATE_FORMAT;
+                sdf.setTimeZone(TimeZone.getTimeZone("Africa/Johannesburg"));
+                return sdf.format(date);
+            } catch (Exception e) {
+                LOG.error("Error converting the epoch date [" + dateInput + "]");
+                return dateInput;
+            }
+        } else {
+            LOG.warn("Input date[" + dateInput + "] is not an epoch date");
             return dateInput;
         }
     }
 
     public static String getBasicDateFormat(String dateInput) {
-        try {
-            Date date = new Date(Long.parseLong(dateInput.trim()));
-            SimpleDateFormat sdf = BASIC_DATE_FORMAT;
-            sdf.setTimeZone(TimeZone.getTimeZone("Africa/Johannesburg"));
-            return sdf.format(date);
-        } catch (Exception e) {
-            LOG.error("Error converting the epoch date [" + dateInput + "]", e);
+        if (dateInput != null && dateInput.chars().allMatch(Character::isDigit)) {
+            try {
+                Date date = new Date(Long.parseLong(dateInput.trim()));
+                SimpleDateFormat sdf = BASIC_DATE_FORMAT;
+                sdf.setTimeZone(TimeZone.getTimeZone("Africa/Johannesburg"));
+                return sdf.format(date);
+            } catch (Exception e) {
+                LOG.error("Error converting the epoch date [" + dateInput + "]", e);
+                return dateInput;
+            }
+        } else {
+            LOG.warn("Input date[" + dateInput + "] is not an epoch date");
             return dateInput;
         }
     }
 
     public static String getHistoryDateFormat(String dateInput) {
-        try {
-            Date date = new Date(Long.parseLong(dateInput.trim()));
-            SimpleDateFormat sdf = HISTORY_DATE_FORMAT;
-            sdf.setTimeZone(TimeZone.getTimeZone("Africa/Johannesburg"));
-            return sdf.format(date);
-        } catch (Exception e) {
-            LOG.error("Error converting the epoch date [" + dateInput + "]", e);
+        if (dateInput != null && dateInput.chars().allMatch(Character::isDigit)) {
+            try {
+                Date date = new Date(Long.parseLong(dateInput.trim()));
+                SimpleDateFormat sdf = HISTORY_DATE_FORMAT;
+                sdf.setTimeZone(TimeZone.getTimeZone("Africa/Johannesburg"));
+                return sdf.format(date);
+            } catch (Exception e) {
+                LOG.error("Error converting the epoch date [" + dateInput + "]", e);
+                return dateInput;
+            }
+        } else {
+            LOG.warn("Input date[" + dateInput + "] is not an epoch date");
             return dateInput;
         }
     }

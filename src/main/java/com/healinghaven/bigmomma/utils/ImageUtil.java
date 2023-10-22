@@ -1,7 +1,6 @@
 package com.healinghaven.bigmomma.utils;
 
 import com.healinghaven.bigmomma.entity.Image;
-import org.hibernate.id.Configurable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,23 +9,35 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
 public class ImageUtil {
     private static final Logger LOG = LoggerFactory.getLogger(ImageUtil.class);
-    public static void setBase64StringToImage(List<Image> images) {
+    public static void setBase64StringToImages(List<Image> images) {
         if(images != null && images.size() > 0) {
             for (Image image : images) {
                 try {
                     File file = new File(image.getLocation());
-                    byte[] input = Files.readAllBytes(Paths.get(file.toURI()));
+                    byte[] input = Files.readAllBytes(file.toPath());
                     byte[] encodedBytes = Base64.getEncoder().encode(input);
                     image.setBase64String(new String(encodedBytes));
                 } catch (Exception e) {
                     LOG.error("Failed to set base64 string for image name[" + image.getLocation() + "] with id[" + image.getId() + "]", e);
                 }
+            }
+        }
+    }
+
+    public static void setBase64StringToImages(Image image) {
+        if(image != null) {
+            try {
+                File file = new File(image.getLocation());
+                byte[] input = Files.readAllBytes(Paths.get(file.toURI()));
+                byte[] encodedBytes = Base64.getEncoder().encode(input);
+                image.setBase64String(new String(encodedBytes));
+            } catch (Exception e) {
+                LOG.error("Failed to set base64 string for image name[" + image.getLocation() + "] with id[" + image.getId() + "]", e);
             }
         }
     }
