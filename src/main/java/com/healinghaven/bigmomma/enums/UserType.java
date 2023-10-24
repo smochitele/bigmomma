@@ -5,7 +5,7 @@ public enum UserType {
     VENDOR("2", "This is a user that owns a store"),
     ADMIN("3", "This is a super user"),
     GUEST("4", "This is a guest user"),
-    OTHER ("4", "Unknown user type");
+    OTHER ("5", "Unknown user type");
 
     private String id;
     private  String description;

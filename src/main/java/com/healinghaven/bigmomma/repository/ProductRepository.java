@@ -222,6 +222,7 @@ public class ProductRepository {
             preparedStatement = connection.prepareStatement(SQL);
             preparedStatement.setString(1, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
             preparedStatement.setInt(2, id);
+            LOG.info("Deleting product by query[" + SQL + "]");
             preparedStatement.execute();
         } catch (Exception e) {
             LOG.error("Failed to delete product with id[" + id + "]", e);

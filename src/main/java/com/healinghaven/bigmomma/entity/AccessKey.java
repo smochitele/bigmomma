@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 public class AccessKey {
     private String email;
     private String password;
-    private String lastLogonDevicePlatform;
+    private String lastLogonDevice;
     private String lastLogonDateTime;
 }

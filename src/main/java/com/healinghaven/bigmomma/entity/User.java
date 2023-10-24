@@ -1,5 +1,6 @@
 package com.healinghaven.bigmomma.entity;
 
+import com.healinghaven.bigmomma.enums.UserStatus;
 import com.healinghaven.bigmomma.enums.UserType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,8 +18,9 @@ public class User {
     private String emailAddress;
     private String cellphoneNumber;
     private UserType userType;
-
     private AccessKey accessKey;
+    private boolean isActive;
+    private UserStatus userStatus;
 
     @Override
     public String toString() {
