@@ -45,7 +45,7 @@ public class UsersRepository {
                     final String validateUserSQL = "SELECT * FROM momma_db.users_auth WHERE user_id = ? AND password = ?";
                     preparedStatement = connection.prepareStatement(validateUserSQL);
                     preparedStatement.setString(1, EncryptionUtil.getHashedSHA256String(user.getEmailAddress()));
-                    preparedStatement.setString(2, EncryptionUtil.getHashedSHA256String(user.getAccessKey().getEmail()));
+                    preparedStatement.setString(2, EncryptionUtil.getHashedSHA256String(user.getAccessKey().getPassword()));
 
                     resultSet = preparedStatement.executeQuery();
 
@@ -100,6 +100,7 @@ public class UsersRepository {
                 user.setUserType(UserType.getUserType(String.valueOf(resultSet.getInt("user_type"))));
                 user.setCellphoneNumber(resultSet.getString("cellphone_number"));
                 user.setActive(resultSet.getBoolean("is_active"));
+                user.setAccessKey(getAccessKey(user.getEmailAddress()));
 
                 users.add(user);
             }
@@ -124,17 +125,17 @@ public class UsersRepository {
                 String searchSQL = "";
                 switch (searchCriteria) {
                     case ID ->
-                            searchSQL = "SELECT * FROM momma_db.users WHERE user_id = " + criteriaValue;
+                            searchSQL = "SELECT * FROM momma_db.users WHERE user_id = '" + criteriaValue + "'";
                     case EMAIL_ADDRESS ->
-                            searchSQL = "SELECT * FROM momma_db.users WHERE email_address = " + criteriaValue;
+                            searchSQL = "SELECT * FROM momma_db.users WHERE email_address = '" + criteriaValue + "'";
                     case CELLPHONE_NUMBER ->
-                            searchSQL = "SELECT * FROM momma_db.users WHERE cellphone_number = " + criteriaValue;
+                            searchSQL = "SELECT * FROM momma_db.users WHERE cellphone_number = '" + criteriaValue + "'";
                     case FIRST_NAME ->
-                            searchSQL = "SELECT * FROM momma_db.users WHERE first_name = " + criteriaValue;
+                            searchSQL = "SELECT * FROM momma_db.users WHERE first_name = '" + criteriaValue + "'";
                     case LAST_NAME ->
-                            searchSQL = "SELECT * FROM momma_db.users WHERE last_name = " + criteriaValue;
+                            searchSQL = "SELECT * FROM momma_db.users WHERE last_name = '" + criteriaValue + "'";
                     case USER_TYPE ->
-                            searchSQL = "SELECT * FROM momma_db.users WHERE user_type = " + criteriaValue;
+                            searchSQL = "SELECT * FROM momma_db.users WHERE user_type = '" + criteriaValue + "'";
                     default -> {
                         LOG.warn("No search criteria found, going to return[NULL]");
                         return null;
@@ -260,7 +261,7 @@ public class UsersRepository {
         if(StringUtils.isNotBlank(emailAddress)) {
             try {
                 AccessKey accessKey = null;
-                final String SQL = "SELECT * FROM momma_db.users_auth WHERE user_id = " + EncryptionUtil.getHashedSHA256String(emailAddress);
+                final String SQL = "SELECT * FROM momma_db.users_auth WHERE user_id = '" + EncryptionUtil.getHashedSHA256String(emailAddress) +"'";
 
                 connection = ConnectionFactory.getConnection();
                 preparedStatement = connection.prepareStatement(SQL);
@@ -277,6 +278,8 @@ public class UsersRepository {
             } catch (Exception e) {
                 LOG.error("Failed to get access key", e);
                 return null;
+            } finally {
+                DatabaseUtil.close(connection, preparedStatement, resultSet);
             }
         } else {
             LOG.warn("Empty string entered emailAddress[" + emailAddress + "]");
@@ -304,6 +307,8 @@ public class UsersRepository {
 
                 preparedStatement.execute();
 
+                setUserAccessKey(user);
+
                 LOG.info("Successfully added user[" + user + "]");
                 return user;
             } catch (Exception e) {
@@ -328,7 +333,7 @@ public class UsersRepository {
                                        "user_type = ?, " +
                                        "cellphone_number = ?, " +
                                        "last_updated = ? " +
-                                       "WHERE user_id = ?";
+                                       "WHERE email_address = ?";
 
                     connection = ConnectionFactory.getConnection();
                     preparedStatement = connection.prepareStatement(SQL);
@@ -338,12 +343,13 @@ public class UsersRepository {
                     preparedStatement.setInt(3, user.getUserType().ordinal());
                     preparedStatement.setString(4, user.getCellphoneNumber());
                     preparedStatement.setString(5, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
-                    preparedStatement.setString(6, user.getUserId());
+                    preparedStatement.setString(6, user.getEmailAddress());
 
                     LOG.info("Executing query[" + SQL + "]");
                     preparedStatement.execute();
 
                     User updatedUser = getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, user.getEmailAddress());
+                    user.setAccessKey(getAccessKey(user.getEmailAddress()));
                     LOG.info("Successfully updated user from [" + user + "] to user[" + updatedUser + "]");
                     return updatedUser;
                 } catch (Exception e) {
@@ -366,13 +372,18 @@ public class UsersRepository {
         if (accessKey != null) {
             try {
                 final String SQL = "UPDATE momma_db.users_auth SET " +
-                                   "password = " + EncryptionUtil.getHashedSHA256String(accessKey.getPassword()) + " " +
-                                   "WHERE user_id = " + EncryptionUtil.getHashedSHA256String(accessKey.getEmail());
+                                   "password = ?, " +
+                                   "last_updated = ? " +
+                                   "WHERE user_id = ?";
 
                 connection = ConnectionFactory.getConnection();
-                LOG.info("Executing query[" + SQL + "]");
                 preparedStatement = connection.prepareStatement(SQL);
 
+                preparedStatement.setString(1, EncryptionUtil.getHashedSHA256String(accessKey.getPassword()));
+                preparedStatement.setString(2, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
+                preparedStatement.setString(3, EncryptionUtil.getHashedSHA256String(accessKey.getEmail()));
+
+                LOG.info("Executing query[" + SQL + "]");
                 preparedStatement.execute();
                 return accessKey;
             } catch (Exception e) {
@@ -403,6 +414,31 @@ public class UsersRepository {
             }
         } else {
             LOG.warn("User's email address is blank");
+        }
+    }
+
+    private void setUserAccessKey(User user) {
+        if(user != null) {
+            try {
+                final String SQL = "INSERT INTO momma_db.users_auth (user_id, password, last_logon_device) VALUES (?,?,?)";
+
+                connection = ConnectionFactory.getConnection();
+                LOG.info("Executing query[" + SQL + "]");
+
+                preparedStatement = connection.prepareStatement(SQL);
+
+                preparedStatement.setString(1, EncryptionUtil.getHashedSHA256String(user.getAccessKey().getEmail()));
+                preparedStatement.setString(2, EncryptionUtil.getHashedSHA256String(user.getAccessKey().getPassword()));
+                preparedStatement.setString(3, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
+
+                preparedStatement.execute();
+
+                LOG.info("Successfully added access key for user[" + user + "]");
+            } catch (Exception e) {
+                LOG.error("Failed to update user access key for user[" + user + "]", e);
+            } finally {
+                DatabaseUtil.close(connection, preparedStatement);
+            }
         }
     }
 }
