@@ -14,7 +14,6 @@ public class Image {
     private String base64String;
     private String location;
     private double size;
-
     private String dateAdded;
     private String fileExtension;
 

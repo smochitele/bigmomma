@@ -46,16 +46,16 @@ public class ProductRepository {
                     product.setInstructions(resultSet.getString("instructions"));
                     product.setColor(resultSet.getString("color"));
                     product.setPrice(resultSet.getFloat("price"));
-                    product.setBestBefore(DateUtil.getBasicDateFormat(resultSet.getString("best_before")));
+                    product.setBestBefore((resultSet.getString("best_before")));
                     product.setQuantity(resultSet.getInt("quantity"));
                     product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
                     product.setRating(resultSet.getFloat("rating"));
-                    product.setDateAdded(DateUtil.getFullDateFormat(String.valueOf(resultSet.getDate("date_added"))));
+                    product.setDateAdded(String.valueOf(resultSet.getDate("date_added")));
                     product.setOwner(resultSet.getInt("product_owner"));
                     product.setActive(resultSet.getBoolean("is_active"));
 
                     product.setImages(imageService.getEntityImages(product.getId()));
-                    ImageUtil.setBase64StringToImage(product.getImages());
+                    ImageUtil.setBase64StringToImages(product.getImages());
 
                     LOG.info("Returning product[" + product + "]");
                 } else {
@@ -94,15 +94,15 @@ public class ProductRepository {
                     product.setInstructions(resultSet.getString("instructions"));
                     product.setColor(resultSet.getString("color"));
                     product.setPrice(resultSet.getFloat("price"));
-                    product.setBestBefore(DateUtil.getBasicDateFormat(resultSet.getString("best_before")));
+                    product.setBestBefore((resultSet.getString("best_before")));
                     product.setQuantity(resultSet.getInt("quantity"));
                     product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
                     product.setRating(resultSet.getFloat("rating"));
-                    product.setDateAdded(DateUtil.getFullDateFormat(String.valueOf(resultSet.getTimestamp("date_added"))));
+                    product.setDateAdded((String.valueOf(resultSet.getTimestamp("date_added"))));
                     product.setActive(resultSet.getBoolean("is_active"));
 
                     product.setImages(imageService.getEntityImages(product.getId()));
-                    ImageUtil.setBase64StringToImage(product.getImages());
+                    ImageUtil.setBase64StringToImages(product.getImages());
 
                     products.add(product);
                 }
@@ -143,12 +143,12 @@ public class ProductRepository {
                     product.setQuantity(resultSet.getInt("quantity"));
                     product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
                     product.setRating(resultSet.getFloat("rating"));
-                    product.setDateAdded(DateUtil.getFullDateFormat(String.valueOf(resultSet.getDate("date_added"))));
+                    product.setDateAdded(String.valueOf(resultSet.getDate("date_added")));
                     product.setOwner(resultSet.getInt("product_owner"));
                     product.setActive(resultSet.getBoolean("is_active"));
 
                     product.setImages(imageService.getEntityImages(product.getId()));
-                    ImageUtil.setBase64StringToImage(product.getImages());
+                    ImageUtil.setBase64StringToImages(product.getImages());
 
                     products.add(product);
                 }
@@ -194,7 +194,7 @@ public class ProductRepository {
                     product.setActive(resultSet.getBoolean("is_active"));
 
                     product.setImages(imageService.getEntityImages(product.getId()));
-                    ImageUtil.setBase64StringToImage(product.getImages());
+                    ImageUtil.setBase64StringToImages(product.getImages());
 
                     products.add(product);
                 } else {
@@ -222,6 +222,7 @@ public class ProductRepository {
             preparedStatement = connection.prepareStatement(SQL);
             preparedStatement.setString(1, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
             preparedStatement.setInt(2, id);
+            LOG.info("Deleting product by query[" + SQL + "]");
             preparedStatement.execute();
         } catch (Exception e) {
             LOG.error("Failed to delete product with id[" + id + "]", e);

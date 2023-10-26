@@ -4,6 +4,7 @@ import com.healinghaven.bigmomma.datasource.db.ConnectionFactory;
 import com.healinghaven.bigmomma.entity.Image;
 import com.healinghaven.bigmomma.utils.DatabaseUtil;
 import com.healinghaven.bigmomma.utils.DateUtil;
+import com.healinghaven.bigmomma.utils.ImageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -203,6 +204,35 @@ public class ImageRepository {
             LOG.error("Failed to delete image with id[" + imageId + "]", e);
         } finally {
             DatabaseUtil.close(connection, preparedStatement);
+        }
+    }
+
+    public Image getImageById(int imageId) {
+        try {
+            final String SQL = "select * from momma_db.images WHERE id = ?";
+            connection = ConnectionFactory.getConnection();
+            preparedStatement = connection.prepareStatement(SQL);
+            preparedStatement.setInt(1, imageId);
+
+            LOG.info("Executing query[" + SQL + "]");
+            resultSet = preparedStatement.executeQuery();
+            Image image = null;
+            if(resultSet.next()) {
+                image = new Image();
+
+                image.setId(resultSet.getInt("id"));
+                image.setImageName(resultSet.getString("name_col"));
+                image.setLocation(resultSet.getString("url"));
+                image.setFileExtension(resultSet.getString("extension"));
+                image.setSize(resultSet.getDouble("size_in_bytes"));
+                image.setDateAdded(resultSet.getString("date_added"));
+
+                ImageUtil.setBase64StringToImages(image);
+            }
+            return image;
+        } catch (Exception e) {
+            LOG.info("Failed to get image with id[" + imageId + "]", e);
+            return null;
         }
     }
 }
