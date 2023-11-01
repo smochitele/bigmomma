@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Image {
     private int id;
-    private int entityId;
     private String imageName;
     private String base64String;
     private String location;

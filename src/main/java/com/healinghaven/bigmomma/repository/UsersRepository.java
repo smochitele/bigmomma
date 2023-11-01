@@ -30,7 +30,7 @@ public class UsersRepository {
 
 
     public User getUser(User user) {
-        if(user != null && user.getAccessKey() != null && user.getEmailAddress() != null) {
+        if(user != null && user.getAccessKey() != null && StringUtils.isNotBlank(user.getEmailAddress())) {
             try {
                 final String checkUserSQL = "SELECT * FROM momma_db.users_auth WHERE user_id = ?";
                 connection = ConnectionFactory.getConnection();
@@ -42,7 +42,7 @@ public class UsersRepository {
                 if(resultSet.next()) {
                     LOG.info("User[" + user + "] exists, now looking up password");
 
-                    final String validateUserSQL = "SELECT * FROM momma_db.users_auth WHERE user_id = ? AND password = ?";
+                    final String validateUserSQL = "SELECT * FROM momma_db.users_auth WHERE user_id = ? AND password_col = ?";
                     preparedStatement = connection.prepareStatement(validateUserSQL);
                     preparedStatement.setString(1, EncryptionUtil.getHashedSHA256String(user.getEmailAddress()));
                     preparedStatement.setString(2, EncryptionUtil.getHashedSHA256String(user.getAccessKey().getPassword()));
@@ -372,7 +372,7 @@ public class UsersRepository {
         if (accessKey != null) {
             try {
                 final String SQL = "UPDATE momma_db.users_auth SET " +
-                                   "password = ?, " +
+                                   "password_col = ?, " +
                                    "last_updated = ? " +
                                    "WHERE user_id = ?";
 
@@ -420,7 +420,7 @@ public class UsersRepository {
     private void setUserAccessKey(User user) {
         if(user != null) {
             try {
-                final String SQL = "INSERT INTO momma_db.users_auth (user_id, password, last_logon_device) VALUES (?,?,?)";
+                final String SQL = "INSERT INTO momma_db.users_auth (user_id, password_col, last_logon_device) VALUES (?,?,?)";
 
                 connection = ConnectionFactory.getConnection();
                 LOG.info("Executing query[" + SQL + "]");
