@@ -1,5 +1,6 @@
 package com.healinghaven.bigmomma.entity;
 
+import com.healinghaven.bigmomma.enums.ImageEntityType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ public class Image {
     private double size;
     private String dateAdded;
     private String fileExtension;
+    private ImageEntityType imageEntityType;
 
     @Override
     public String toString() {

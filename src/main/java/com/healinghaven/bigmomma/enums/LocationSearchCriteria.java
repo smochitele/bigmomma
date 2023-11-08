@@ -6,7 +6,7 @@ public enum LocationSearchCriteria {
     SUBURB,
     STREET_NUMBER;
 
-    public static LocationSearchCriteria getVendorSearchCriteria(int ordinal) {
+    public static LocationSearchCriteria geLocationSearchCriteria(int ordinal) {
         for(LocationSearchCriteria criteria : LocationSearchCriteria.values()) {
             if (criteria.ordinal() == ordinal)
                 return criteria;

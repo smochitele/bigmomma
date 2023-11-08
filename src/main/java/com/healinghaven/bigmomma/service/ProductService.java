@@ -28,6 +28,16 @@ public class ProductService {
         }
     }
 
+
+    public List<Product> getVendorProducts(int vendorId) {
+        try {
+            LOG.info("Attempting to get products belonging to vendor with Id[" + vendorId + "]");
+            return repository.getVendorProducts(vendorId);
+        } catch (Exception e) {
+            LOG.error("Failed to get products belonging to vendor with Id[" + vendorId + "]", e);
+            return null;
+        }
+    }
     public Product getProductById(int id) {
         try {
             LOG.info("Attempting to get product with id[" + id + "]");

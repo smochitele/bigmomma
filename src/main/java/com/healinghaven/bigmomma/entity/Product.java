@@ -25,11 +25,10 @@ public class Product {
     private double rating;
     private String dateAdded;
     private boolean isActive;
-    private int owner;
-    private String lastUpdated;
+    private String vendor;
 
     @Override
     public String toString() {
-        return String.format("Product {id[%s] name[%s] description[%s] color[%s] price[%s] bestBefore[%s] quantity[%s] rating[%s] isActive[%s] owner[%s]}", id, name, description, color, price, bestBefore, quantity, rating, isActive, owner);
+        return String.format("Product {id[%s] name[%s] description[%s] color[%s] price[%s] bestBefore[%s] quantity[%s] rating[%s] isActive[%s] owner[%s]}", id, name, description, color, price, bestBefore, quantity, rating, isActive, vendor);
     }
 }

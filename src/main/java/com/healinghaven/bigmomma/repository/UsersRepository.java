@@ -97,7 +97,7 @@ public class UsersRepository {
                 user.setFirstName(resultSet.getString("first_name"));
                 user.setLastName(resultSet.getString("last_name"));
                 user.setEmailAddress(resultSet.getString("email_address"));
-                user.setUserType(UserType.getUserType(String.valueOf(resultSet.getInt("user_type"))));
+                user.setUserType(UserType.getUserType(resultSet.getInt("user_type")));
                 user.setCellphoneNumber(resultSet.getString("cellphone_number"));
                 user.setActive(resultSet.getBoolean("is_active"));
                 user.setAccessKey(getAccessKey(user.getEmailAddress()));
@@ -156,7 +156,7 @@ public class UsersRepository {
                     user.setFirstName(resultSet.getString("first_name"));
                     user.setLastName(resultSet.getString("last_name"));
                     user.setEmailAddress(resultSet.getString("email_address"));
-                    user.setUserType(UserType.getUserType(String.valueOf(resultSet.getInt("user_type"))));
+                    user.setUserType(UserType.getUserType(resultSet.getInt("user_type")));
                     user.setCellphoneNumber(resultSet.getString("cellphone_number"));
                     user.setUserStatus(UserStatus.getUserStatus(resultSet.getInt("is_active")));
                 }
@@ -212,7 +212,7 @@ public class UsersRepository {
                     user.setFirstName(resultSet.getString("first_name"));
                     user.setLastName(resultSet.getString("last_name"));
                     user.setEmailAddress(resultSet.getString("email_address"));
-                    user.setUserType(UserType.getUserType(String.valueOf(resultSet.getInt("user_type"))));
+                    user.setUserType(UserType.getUserType(resultSet.getInt("user_type")));
                     user.setCellphoneNumber(resultSet.getString("cellphone_number"));
                     user.setUserStatus(UserStatus.getUserStatus(resultSet.getInt("is_active")));
 
@@ -439,6 +439,32 @@ public class UsersRepository {
             } finally {
                 DatabaseUtil.close(connection, preparedStatement);
             }
+        }
+    }
+
+    public void updateUserType(String emailAddress, UserType userType) {
+        if (StringUtils.isNotBlank(emailAddress) && userType != null) {
+            try {
+                final String SQL = "UPDATE momma_db.users SET " +
+                                   "user_type = ?, " +
+                                   "last_updated = ? " +
+                                   "WHERE email_address = ?";
+
+                connection = ConnectionFactory.getConnection();
+                preparedStatement = connection.prepareStatement(SQL);
+                preparedStatement.setInt(1, userType.ordinal());
+                preparedStatement.setString(2, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
+                preparedStatement.setString(3, emailAddress);
+
+                LOG.info("Executing query[" + SQL + "]");
+                preparedStatement.execute();
+            } catch (Exception e) {
+                LOG.error("Failed to update user[" + emailAddress + "] to [" + userType + "]");
+            } finally {
+                DatabaseUtil.close(connection, preparedStatement, resultSet);
+            }
+        } else {
+            LOG.warn("Null values passed in the method emailAddress[" + emailAddress + "] userType[" + userType + "]");
         }
     }
 }

@@ -7,8 +7,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.healinghaven.bigmomma.entity.Vendor;
+import com.healinghaven.bigmomma.enums.ImageEntityType;
 import com.healinghaven.bigmomma.enums.ProductCategory;
 import com.healinghaven.bigmomma.service.ImageService;
+import com.healinghaven.bigmomma.service.VendorService;
 import com.healinghaven.bigmomma.utils.DatabaseUtil;
 import com.healinghaven.bigmomma.utils.DateUtil;
 import com.healinghaven.bigmomma.utils.ImageUtil;
@@ -23,6 +26,8 @@ public class ProductRepository {
 
     @Autowired
     private ImageService imageService;
+    @Autowired
+    private VendorService vendorService;
     private Connection connection;
     private PreparedStatement preparedStatement;
     private ResultSet resultSet;
@@ -51,10 +56,10 @@ public class ProductRepository {
                     product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
                     product.setRating(resultSet.getFloat("rating"));
                     product.setDateAdded(String.valueOf(resultSet.getDate("date_added")));
-                    product.setOwner(resultSet.getInt("product_owner"));
+                    product.setVendor(getVendorById(resultSet.getString("product_owner")).getName());
                     product.setActive(resultSet.getBoolean("is_active"));
 
-                    product.setImages(imageService.getEntityImages(product.getId()));
+                    product.setImages(imageService.getProductImages(product.getId()));
                     ImageUtil.setBase64StringToImages(product.getImages());
 
                     LOG.info("Returning product[" + product + "]");
@@ -101,7 +106,7 @@ public class ProductRepository {
                     product.setDateAdded((String.valueOf(resultSet.getTimestamp("date_added"))));
                     product.setActive(resultSet.getBoolean("is_active"));
 
-                    product.setImages(imageService.getEntityImages(product.getId()));
+                    product.setImages(imageService.getProductImages(product.getId()));
                     ImageUtil.setBase64StringToImages(product.getImages());
 
                     products.add(product);
@@ -144,10 +149,10 @@ public class ProductRepository {
                     product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
                     product.setRating(resultSet.getFloat("rating"));
                     product.setDateAdded(String.valueOf(resultSet.getDate("date_added")));
-                    product.setOwner(resultSet.getInt("product_owner"));
+                    product.setVendor(vendorService.getVendorById(String.valueOf(resultSet.getInt("product_owner"))).getName());
                     product.setActive(resultSet.getBoolean("is_active"));
 
-                    product.setImages(imageService.getEntityImages(product.getId()));
+                    product.setImages(imageService.getProductImages(product.getId()));
                     ImageUtil.setBase64StringToImages(product.getImages());
 
                     products.add(product);
@@ -190,10 +195,10 @@ public class ProductRepository {
                     product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
                     product.setRating(resultSet.getFloat("rating"));
                     product.setDateAdded(DateUtil.getFullDateFormat(String.valueOf(resultSet.getDate("date_added"))));
-                    product.setOwner(resultSet.getInt("product_owner"));
+                    product.setVendor(vendorService.getVendorById(String.valueOf(resultSet.getInt("product_owner"))).getName());
                     product.setActive(resultSet.getBoolean("is_active"));
 
-                    product.setImages(imageService.getEntityImages(product.getId()));
+                    product.setImages(imageService.getProductImages(product.getId()));
                     ImageUtil.setBase64StringToImages(product.getImages());
 
                     products.add(product);
@@ -209,6 +214,38 @@ public class ProductRepository {
             return products;
         } catch (Exception e) {
             LOG.error("Failed get products with name[" + name + "] from db", e);
+            return null;
+        } finally {
+            DatabaseUtil.close(connection, preparedStatement, resultSet);
+        }
+    }
+
+    public List<Product> getVendorProducts(int vendorId) {
+        ArrayList<Product> products = new ArrayList<>();
+        try {
+            final String SQL = "SELECT * FROM momma_db.products WHERE product_owner = ?";
+            connection = ConnectionFactory.getConnection();
+
+            LOG.info("Executing query[" + SQL + "]");
+            preparedStatement = connection.prepareStatement(SQL);
+            preparedStatement.setInt(1, vendorId);
+            resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                if (resultSet.getBoolean("is_active")) {
+                    Product product = getProductFromResultSet(resultSet);
+
+                    products.add(product);
+                }
+            }
+            if (products.size() > 0) {
+                LOG.info("Successfully returned [" + products.size() + "] products belonging to vendor with Id[" + vendorId + "]");
+            } else {
+                LOG.error("No products found on the DB");
+            }
+            return products;
+        } catch (Exception e) {
+            LOG.error("Failed to retrieve products", e);
             return null;
         } finally {
             DatabaseUtil.close(connection, preparedStatement, resultSet);
@@ -234,7 +271,6 @@ public class ProductRepository {
 
     public void updateProduct(Product product) throws SQLException {
         try {
-            product.setLastUpdated(DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
             final String SQL = "UPDATE momma_db.products " +
                                 "SET name_col = ?," +
                                     "description_col = ?," +
@@ -264,10 +300,10 @@ public class ProductRepository {
             preparedStatement.setInt(7, product.getQuantity());
             preparedStatement.setInt(8, product.getCategory().ordinal());
             preparedStatement.setFloat(9, (float) product.getRating());
-            preparedStatement.setInt(10, product.getOwner());
+            preparedStatement.setInt(10, Integer.valueOf(getVendorByName(product.getName()).getId()));
             preparedStatement.setBoolean(11, product.isActive());
-            preparedStatement.setString(12, product.getDateAdded());
-            preparedStatement.setString(13, product.getLastUpdated());
+            preparedStatement.setString(12, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
+            preparedStatement.setString(13, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
             preparedStatement.setInt(14, product.getId());
 
             preparedStatement.execute();
@@ -288,15 +324,7 @@ public class ProductRepository {
                 connection = ConnectionFactory.getConnection();
                 LOG.info("Executing query[" + SQL + "]");
                 preparedStatement = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
-                preparedStatement.setString(1, product.getName());
-                preparedStatement.setString(2, product.getDescription());
-                preparedStatement.setString(3, product.getInstructions());
-                preparedStatement.setString(4, product.getColor());
-                preparedStatement.setFloat(5, (float) product.getPrice());
-                preparedStatement.setString(6, product.getBestBefore());
-                preparedStatement.setInt(7, product.getQuantity());
-                preparedStatement.setInt(8, product.getCategory().ordinal());
-                preparedStatement.setInt(9, product.getOwner());
+                setProductPreparedStatement(preparedStatement,product);
 
                 preparedStatement.execute();
 
@@ -307,7 +335,7 @@ public class ProductRepository {
                         if(rs.next()) {
                             int productId = rs.getInt("LAST_INSERT_ID()");
                             LOG.info("Saving product images for product[" + productId + "]");
-                            imageService.saveImages(product.getImages(), productId);
+                            imageService.saveImages(product.getImages(), productId, ImageEntityType.PRODUCT_IMAGE);
                         }
                     }
                 } catch (Exception e) {
@@ -340,16 +368,7 @@ public class ProductRepository {
                         LOG.info("Executing query[" + SQL + "]");
                         try {
                             preparedStatement = connection.prepareStatement(SQL);
-
-                            preparedStatement.setString(1, p.getName());
-                            preparedStatement.setString(2, p.getDescription());
-                            preparedStatement.setString(3, p.getInstructions());
-                            preparedStatement.setString(4, p.getColor());
-                            preparedStatement.setFloat(5, (float) p.getPrice());
-                            preparedStatement.setString(6, p.getBestBefore());
-                            preparedStatement.setInt(7, p.getQuantity());
-                            preparedStatement.setInt(8, p.getCategory().ordinal());
-                            preparedStatement.setInt(9, p.getOwner());
+                            setProductPreparedStatement(preparedStatement, p);
 
                             preparedStatement.execute();
 
@@ -359,7 +378,7 @@ public class ProductRepository {
                                 if(rs.next()) {
                                     int productId = rs.getInt("LAST_INSERT_ID()");
                                     LOG.info("Saving product images for product[" + productId + "]");
-                                    imageService.saveImages(p.getImages(), productId);
+                                    imageService.saveImages(p.getImages(), productId, ImageEntityType.PRODUCT_IMAGE);
                                 }
                             } catch (Exception e) {
                                 LOG.info("Error saving images related tp product[" + p + "]");
@@ -385,5 +404,64 @@ public class ProductRepository {
         } finally {
             DatabaseUtil.close(connection, preparedStatement);
         }
+    }
+
+    private Product getProductFromResultSet(ResultSet resultSet) {
+        if (resultSet != null) {
+            try {
+                Product product = new Product();
+
+                product.setId(resultSet.getInt("id"));
+                product.setName(resultSet.getString("name_col"));
+                product.setDescription(resultSet.getString("description_col"));
+                product.setInstructions(resultSet.getString("instructions"));
+                product.setColor(resultSet.getString("color"));
+                product.setPrice(resultSet.getFloat("price"));
+                product.setBestBefore((resultSet.getString("best_before")));
+                product.setQuantity(resultSet.getInt("quantity"));
+                product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
+                product.setRating(resultSet.getFloat("rating"));
+                product.setDateAdded((String.valueOf(resultSet.getTimestamp("date_added"))));
+                product.setActive(resultSet.getBoolean("is_active"));
+                product.setVendor(getVendorById(resultSet.getString("product_owner")).getName());
+
+                product.setImages(new ImageRepository().getProductImages(product.getId()));
+                ImageUtil.setBase64StringToImages(product.getImages());
+
+                return product;
+            } catch (Exception e) {
+                LOG.error("Failed to get product from result set", e);
+                return null;
+            }
+        } else {
+            LOG.warn("Result set null, returning a null product");
+            return null;
+        }
+    }
+
+    private void setProductPreparedStatement(PreparedStatement preparedStatement, Product p) {
+        try {
+            preparedStatement.setString(1, p.getName());
+            preparedStatement.setString(2, p.getDescription());
+            preparedStatement.setString(3, p.getInstructions());
+            preparedStatement.setString(4, p.getColor());
+            preparedStatement.setFloat(5, (float) p.getPrice());
+            preparedStatement.setString(6, p.getBestBefore());
+            preparedStatement.setInt(7, p.getQuantity());
+            preparedStatement.setInt(8, p.getCategory().ordinal());
+            preparedStatement.setInt(9, Integer.parseInt(getVendorByName(p.getVendor()).getId()));
+        } catch (Exception e) {
+            LOG.error("Failed to set set up prepared statement", e);
+        }
+    }
+
+
+    private Vendor getVendorById(String vendorId) {
+        return new VendorRepository().getVendorById(vendorId, false);
+    }
+
+
+    private Vendor getVendorByName(String vendorName) {
+        return new VendorRepository().getVendorByName(vendorName, false);
     }
 }

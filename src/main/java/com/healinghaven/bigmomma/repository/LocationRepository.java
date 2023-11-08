@@ -153,7 +153,7 @@ public class LocationRepository {
                 DatabaseUtil.close(connection, preparedStatement, resultSet);
             }
         } else {
-            LOG.warn("Null value in method[public List<Location> getLocationsByCriteria(LocationSearchCriteria criteria, String value)]");
+            LOG.warn("Null value in method[public List<Location> getLocationsByCriteria(LocationSearchCriteria criteria[" + criteria + "], String value[" + value + "])]");
             return null;
         }
     }
