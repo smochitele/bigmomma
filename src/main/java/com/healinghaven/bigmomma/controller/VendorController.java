@@ -33,12 +33,13 @@ public class VendorController {
         return service.getVendorByLocationCriteria(LocationSearchCriteria.geLocationSearchCriteria(criteria), value);
     }
 
-    @PutMapping("/api/updatevendor")
-    public Vendor updateVendor(@RequestBody Vendor vendor) {
-        return service.updateVendor(vendor);
-    }
     @PostMapping("/api/addvendor")
     public Vendor addVendor(@RequestBody Vendor vendor) {
         return service.addVendor(vendor);
+    }
+
+    @PutMapping("/api/updatevendor")
+    public Vendor updateVendor(@RequestBody Vendor vendor) {
+        return service.updateVendor(vendor);
     }
 }

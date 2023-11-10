@@ -6,6 +6,7 @@ import com.healinghaven.bigmomma.enums.ImageEntityType;
 import com.healinghaven.bigmomma.utils.DatabaseUtil;
 import com.healinghaven.bigmomma.utils.DateUtil;
 import com.healinghaven.bigmomma.utils.ImageUtil;
+import io.micrometer.common.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -237,7 +239,7 @@ public class ImageRepository {
         return null;
     }
 
-    public void deleteImage(int imageId) {
+    public void deleteImage(int imageId) throws SQLException {
         try {
             final String SQL = "UPDATE momma_db.images SET is_active = '0', last_updated = ? WHERE id = ? ";
             connection = ConnectionFactory.getConnection();
@@ -247,8 +249,46 @@ public class ImageRepository {
             preparedStatement.execute();
         } catch (Exception e) {
             LOG.error("Failed to delete image with id[" + imageId + "]", e);
+            throw e;
         } finally {
             DatabaseUtil.close(connection, preparedStatement);
+        }
+    }
+
+    public Image updateImage(Image image) {
+        if(image != null && StringUtils.isNotBlank(image.getBase64String())) {
+            try {
+                final String SQL = "UPDATE momma_db.images SET " +
+                                   "name_col = ?, " +
+                                   "url = ?, " +
+                                   "extension = ?, " +
+                                   "size_in_bytes = ?, " +
+                                   "last_updated = ? " +
+                                   "WHERE id = ?";
+
+                connection = ConnectionFactory.getConnection();
+                preparedStatement = connection.prepareStatement(SQL);
+
+                preparedStatement.setString(1, image.getImageName());
+                preparedStatement.setString(2, image.getLocation());
+                preparedStatement.setString(3, image.getFileExtension());
+                preparedStatement.setDouble(4, image.getSize());
+                preparedStatement.setString(5, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
+                preparedStatement.setInt(6, image.getId());
+
+                LOG.info("Executing query[" + SQL + "]");
+
+                preparedStatement.execute();
+                return getImageById(image.getId());
+            } catch (Exception e) {
+                LOG.error("Failed to update image[" + image + "]", e);
+                return null;
+            } finally {
+                DatabaseUtil.close(connection, preparedStatement);
+            }
+        } else {
+            LOG.warn("Null image passed in method[public Image updateImage(Image image)]");
+            return null;
         }
     }
 

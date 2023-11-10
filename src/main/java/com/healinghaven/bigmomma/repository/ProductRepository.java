@@ -424,6 +424,7 @@ public class ProductRepository {
                 product.setDateAdded((String.valueOf(resultSet.getTimestamp("date_added"))));
                 product.setActive(resultSet.getBoolean("is_active"));
                 product.setVendor(getVendorById(resultSet.getString("product_owner")).getName());
+                product.setDateAdded(resultSet.getString("date_added"));
 
                 product.setImages(new ImageRepository().getProductImages(product.getId()));
                 ImageUtil.setBase64StringToImages(product.getImages());

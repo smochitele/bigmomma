@@ -7,6 +7,7 @@ import com.healinghaven.bigmomma.utils.ImageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,9 +41,31 @@ public class ImageService {
     public Image saveImage(Image image, int entityID, ImageEntityType imageEntityType) {
         try {
             LOG.info("Attempting to save image[" + image + "]");
+            ImageUtil.saveImageToDirectory(image);
             return repository.saveImage(image,entityID, imageEntityType);
         } catch (Exception e) {
             LOG.error("Failed to save image[" + image + "]", e);
+            return null;
+        }
+    }
+
+    public String deleteImage(int imageId) {
+        try {
+            LOG.info("Attempting to delete image with id[" + imageId + "]");
+            repository.deleteImage(imageId);
+            return HttpStatus.OK + "- Image[" + imageId + "] deleted";
+        } catch (Exception e) {
+            LOG.error("Failed to delete image with id[" + imageId + "]", e);
+            return null;
+        }
+    }
+
+    public Image updateImage(Image image) {
+        try {
+            LOG.info("Attempting to update image[" + image + "]");
+            return updateImage(image);
+        } catch (Exception e) {
+            LOG.error("Failed to update image[" + image + "]", e);
             return null;
         }
     }

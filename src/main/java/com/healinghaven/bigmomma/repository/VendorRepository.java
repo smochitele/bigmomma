@@ -75,21 +75,12 @@ public class VendorRepository {
                         LOG.error("Failed to set vendor location", e);
                     }
                 }
-
-                if (vendor.getLogo() != null) {
-                    LOG.info("Adding image logo[" + vendor.getLogo() + "] to vendor[" + vendor + "]");
-                    try {
-                        imageService.saveImage(vendor.getLogo(), Integer.parseInt(vendor.getId()), ImageEntityType.LOGO_IMAGE);
-                    } catch (Exception e) {
-                        LOG.error("Failed to add the vendor logo", e);
-                    }
-                }
                 LOG.info("Changing user type of user[" + vendor.getOwner() + "] to UserType[" + UserType.VENDOR_OWNER + "]");
                 usersService.updateUserType(vendor.getOwner().getEmailAddress(), UserType.VENDOR_OWNER);
 
-                return vendor;
+                return getOwnersVendor(vendor.getOwner().getEmailAddress());
             } catch (Exception e) {
-                LOG.error("Failed to add vendor[" + vendor + "]");
+                LOG.error("Failed to add vendor[" + vendor + "]", e);
                 return null;
             } finally {
                 DatabaseUtil.close(connection, preparedStatement, resultSet);
@@ -199,7 +190,7 @@ public class VendorRepository {
                     vendor.setName(resultSet.getString("vendor_name"));
                     vendor.setEmailAddress(resultSet.getString("email_address"));
                     vendor.setCellphoneNumber(resultSet.getString("cellphone_number"));
-                    vendor.setOwner(new UsersRepository().getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, resultSet.getString("email_address")));
+                    vendor.setOwner(new UsersRepository().getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, resultSet.getString("vendor_owner")));
                     vendor.setDescription(resultSet.getString("vendor_description"));
                     vendor.setLocation(new LocationRepository().getEntityLocation(Integer.parseInt(vendor.getId())));
                     vendor.setLogo(new ImageRepository().getImageById(Integer.parseInt(vendor.getId())));
@@ -297,6 +288,7 @@ public class VendorRepository {
                 preparedStatement.execute();
 
                 vendor.setLocation(locationService.updateEntityLocation(vendor.getLocation(), Integer.parseInt(vendor.getId())));
+                vendor.setLogo(imageService.updateImage(vendor.getLogo()));
                 return vendor;
             } catch (Exception e) {
                 LOG.error("Failed to update vendor[" + vendor + "]", e);
@@ -372,4 +364,5 @@ public class VendorRepository {
             return null;
         }
     }
+
 }

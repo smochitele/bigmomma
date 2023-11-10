@@ -1,6 +1,7 @@
 package com.healinghaven.bigmomma.utils;
 
 import com.healinghaven.bigmomma.entity.Image;
+import io.micrometer.common.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,15 +44,17 @@ public class ImageUtil {
     }
 
     public static void saveImageToDirectory(Image image) {
-        if (image != null) {
+        if (image != null && StringUtils.isNotBlank(image.getBase64String())){
             try {
                 byte[] data = Base64.getDecoder().decode(image.getBase64String());
-                try (OutputStream stream = new FileOutputStream(ConfigUtil.getString(ConfigConstants.IMAGE_FILE_LOCATION + getGeneratedImageName(image)))) {
+                try (OutputStream stream = new FileOutputStream(ConfigUtil.getString(ConfigConstants.IMAGE_FILE_LOCATION) + getGeneratedImageName(image))) {
                     stream.write(data);
                 }
             } catch (Exception e) {
                 LOG.error("Failed to create image from base64", e);
             }
+        } else {
+            LOG.warn("Null image passed in method[public static void saveImageToDirectory(Image image)]");
         }
     }
 
