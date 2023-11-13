@@ -115,7 +115,7 @@ public class ProductRepository {
             if (products.size() > 0) {
                 LOG.info("Successfully returned [" + products.size() + "] products");
             } else {
-                LOG.error("No products found on the DB");
+                LOG.warn("No products found on the DB");
             }
             return products;
         } catch (Exception e) {
@@ -241,7 +241,7 @@ public class ProductRepository {
             if (products.size() > 0) {
                 LOG.info("Successfully returned [" + products.size() + "] products belonging to vendor with Id[" + vendorId + "]");
             } else {
-                LOG.error("No products found on the DB");
+                LOG.warn("No products found on the DB for vendor with ID[" + vendorId + "]");
             }
             return products;
         } catch (Exception e) {
@@ -399,7 +399,7 @@ public class ProductRepository {
                 return null;
             }
         } catch (Exception e) {
-            LOG.error("Failed to save products[" + products + "] to DB");
+            LOG.error("Failed to save products[" + products + "] to DB", e);
             return null;
         } finally {
             DatabaseUtil.close(connection, preparedStatement);

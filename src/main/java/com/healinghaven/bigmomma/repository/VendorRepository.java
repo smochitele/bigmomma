@@ -123,7 +123,7 @@ public class VendorRepository {
                 LOG.info("Returning vendor[" + vendor + "]");
                 return vendor;
             } catch (Exception e) {
-                LOG.error("Failed to get the owner's vendor");
+                LOG.error("Failed to get the owner's vendor", e);
                 return null;
             } finally {
                 DatabaseUtil.close(connection, preparedStatement, resultSet);

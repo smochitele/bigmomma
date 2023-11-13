@@ -33,7 +33,7 @@ public class ImageService {
             LOG.info("Attempting to get images belonging to product with ID[" + productID + "]");
             return repository.getProductImages(productID);
         } catch (Exception e) {
-            LOG.error("Failed to get images belonging to entity[" + productID + "]");
+            LOG.error("Failed to get images belonging to entity[" + productID + "]", e);
             return null;
         }
     }

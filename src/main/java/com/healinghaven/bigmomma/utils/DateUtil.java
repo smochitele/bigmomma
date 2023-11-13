@@ -27,7 +27,7 @@ public class DateUtil {
                 sdf.setTimeZone(TimeZone.getTimeZone("Africa/Johannesburg"));
                 return sdf.format(date);
             } catch (Exception e) {
-                LOG.error("Error converting the epoch date [" + dateInput + "]");
+                LOG.error("Error converting the epoch date [" + dateInput + "]", e);
                 return dateInput;
             }
         } else {
