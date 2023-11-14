@@ -3,6 +3,7 @@ package com.healinghaven.bigmomma.service;
 import com.healinghaven.bigmomma.entity.AccessKey;
 import com.healinghaven.bigmomma.entity.User;
 import com.healinghaven.bigmomma.enums.UserSearchCriteria;
+import com.healinghaven.bigmomma.enums.UserType;
 import com.healinghaven.bigmomma.repository.UsersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +78,15 @@ public class UsersService {
         } catch (Exception e) {
             LOG.error("Failed to update user[" + user + "]", e);
             return null;
+        }
+    }
+
+    public void updateUserType(String emailAddress, UserType userType) {
+        try {
+            repository.updateUserType(emailAddress, userType);
+            LOG.info("Attempting to update user[" + emailAddress + "] to user type[" + userType + "]");
+        } catch (Exception e) {
+            LOG.error("Failed to update user[" + emailAddress + "] to user type[" + userType + "]");
         }
     }
 

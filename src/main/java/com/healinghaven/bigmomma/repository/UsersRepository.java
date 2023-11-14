@@ -30,7 +30,7 @@ public class UsersRepository {
 
 
     public User getUser(User user) {
-        if(user != null && user.getAccessKey() != null && user.getEmailAddress() != null) {
+        if(user != null && user.getAccessKey() != null && StringUtils.isNotBlank(user.getEmailAddress())) {
             try {
                 final String checkUserSQL = "SELECT * FROM momma_db.users_auth WHERE user_id = ?";
                 connection = ConnectionFactory.getConnection();
@@ -42,7 +42,7 @@ public class UsersRepository {
                 if(resultSet.next()) {
                     LOG.info("User[" + user + "] exists, now looking up password");
 
-                    final String validateUserSQL = "SELECT * FROM momma_db.users_auth WHERE user_id = ? AND password = ?";
+                    final String validateUserSQL = "SELECT * FROM momma_db.users_auth WHERE user_id = ? AND password_col = ?";
                     preparedStatement = connection.prepareStatement(validateUserSQL);
                     preparedStatement.setString(1, EncryptionUtil.getHashedSHA256String(user.getEmailAddress()));
                     preparedStatement.setString(2, EncryptionUtil.getHashedSHA256String(user.getAccessKey().getPassword()));
@@ -97,7 +97,7 @@ public class UsersRepository {
                 user.setFirstName(resultSet.getString("first_name"));
                 user.setLastName(resultSet.getString("last_name"));
                 user.setEmailAddress(resultSet.getString("email_address"));
-                user.setUserType(UserType.getUserType(String.valueOf(resultSet.getInt("user_type"))));
+                user.setUserType(UserType.getUserType(resultSet.getInt("user_type")));
                 user.setCellphoneNumber(resultSet.getString("cellphone_number"));
                 user.setActive(resultSet.getBoolean("is_active"));
                 user.setAccessKey(getAccessKey(user.getEmailAddress()));
@@ -156,7 +156,7 @@ public class UsersRepository {
                     user.setFirstName(resultSet.getString("first_name"));
                     user.setLastName(resultSet.getString("last_name"));
                     user.setEmailAddress(resultSet.getString("email_address"));
-                    user.setUserType(UserType.getUserType(String.valueOf(resultSet.getInt("user_type"))));
+                    user.setUserType(UserType.getUserType(resultSet.getInt("user_type")));
                     user.setCellphoneNumber(resultSet.getString("cellphone_number"));
                     user.setUserStatus(UserStatus.getUserStatus(resultSet.getInt("is_active")));
                 }
@@ -212,7 +212,7 @@ public class UsersRepository {
                     user.setFirstName(resultSet.getString("first_name"));
                     user.setLastName(resultSet.getString("last_name"));
                     user.setEmailAddress(resultSet.getString("email_address"));
-                    user.setUserType(UserType.getUserType(String.valueOf(resultSet.getInt("user_type"))));
+                    user.setUserType(UserType.getUserType(resultSet.getInt("user_type")));
                     user.setCellphoneNumber(resultSet.getString("cellphone_number"));
                     user.setUserStatus(UserStatus.getUserStatus(resultSet.getInt("is_active")));
 
@@ -372,7 +372,7 @@ public class UsersRepository {
         if (accessKey != null) {
             try {
                 final String SQL = "UPDATE momma_db.users_auth SET " +
-                                   "password = ?, " +
+                                   "password_col = ?, " +
                                    "last_updated = ? " +
                                    "WHERE user_id = ?";
 
@@ -420,7 +420,7 @@ public class UsersRepository {
     private void setUserAccessKey(User user) {
         if(user != null) {
             try {
-                final String SQL = "INSERT INTO momma_db.users_auth (user_id, password, last_logon_device) VALUES (?,?,?)";
+                final String SQL = "INSERT INTO momma_db.users_auth (user_id, password_col, last_logon_device) VALUES (?,?,?)";
 
                 connection = ConnectionFactory.getConnection();
                 LOG.info("Executing query[" + SQL + "]");
@@ -439,6 +439,32 @@ public class UsersRepository {
             } finally {
                 DatabaseUtil.close(connection, preparedStatement);
             }
+        }
+    }
+
+    public void updateUserType(String emailAddress, UserType userType) {
+        if (StringUtils.isNotBlank(emailAddress) && userType != null) {
+            try {
+                final String SQL = "UPDATE momma_db.users SET " +
+                                   "user_type = ?, " +
+                                   "last_updated = ? " +
+                                   "WHERE email_address = ?";
+
+                connection = ConnectionFactory.getConnection();
+                preparedStatement = connection.prepareStatement(SQL);
+                preparedStatement.setInt(1, userType.ordinal());
+                preparedStatement.setString(2, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
+                preparedStatement.setString(3, emailAddress);
+
+                LOG.info("Executing query[" + SQL + "]");
+                preparedStatement.execute();
+            } catch (Exception e) {
+                LOG.error("Failed to update user[" + emailAddress + "] to [" + userType + "]");
+            } finally {
+                DatabaseUtil.close(connection, preparedStatement, resultSet);
+            }
+        } else {
+            LOG.warn("Null values passed in the method emailAddress[" + emailAddress + "] userType[" + userType + "]");
         }
     }
 }

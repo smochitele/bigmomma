@@ -10,6 +10,6 @@ public enum UserStatus {
             if (userStatus.ordinal() == ordinal)
                 return userStatus;
         }
-        return ACTIVE;
+        return INACTIVE;
     }
 }

@@ -20,7 +20,7 @@ public class ConfigUtil {
         try {
             return Objects.requireNonNull(getProperties()).getProperty(configConstant);
         } catch (Exception e) {
-            LOG.error("Failed to get config for[" + configConstant + "]");
+            LOG.error("Failed to get config for[" + configConstant + "]", e);
             return configConstant;
         }
     }
