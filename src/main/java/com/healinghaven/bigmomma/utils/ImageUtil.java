@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 public class ImageUtil {
     private static final Logger LOG = LoggerFactory.getLogger(ImageUtil.class);
@@ -77,13 +78,28 @@ public class ImageUtil {
         }
     }
 
-    private static String getGeneratedImageName(Image image) {
-        try {
-            return image != null && image.getImageName() != null ? System.currentTimeMillis() + "_" + image.getImageName() : String.valueOf(System.currentTimeMillis());
-        } catch (Exception e) {
-            LOG.error("Failed to generate image name", e);
-            assert image != null;
-            return image.getImageName();
+    private static synchronized String getGeneratedImageName(Image image) {
+        String imageName;
+        if (image != null && StringUtils.isNotBlank(image.getImageName())) {
+            try {
+                imageName = generateImageName(image);
+                LOG.info("Image[" + image + "] has been assigned image name[" + imageName + "]");
+                return imageName;
+            } catch (Exception e) {
+                LOG.error("Failed to generate image name", e);
+                return image.getImageName();
+            }
+        } else {
+            imageName = generateImageName(image);
+            LOG.warn("Null image passed in method[private static synchronized String getGeneratedImageName(Image image)], now gonna assign default image name[" + imageName + "]");
+            return imageName;
         }
+    }
+
+    private static String generateImageName(Image image) {
+        if(image != null && StringUtils.isNotBlank(image.getImageName()))
+            return System.currentTimeMillis() + "_" + UUID.randomUUID() +  "_" + image.getImageName();
+        else
+            return System.currentTimeMillis() + "_" + UUID.randomUUID();
     }
 }
