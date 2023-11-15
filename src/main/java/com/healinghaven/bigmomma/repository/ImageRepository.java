@@ -23,11 +23,10 @@ import java.util.Objects;
 public class ImageRepository {
     private static final Logger LOG = LoggerFactory.getLogger(ImageRepository.class);
 
-    private Connection connection;
-    private PreparedStatement preparedStatement;
-    private ResultSet resultSet;
-
     public List<Image> getAllImages() {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             ArrayList<Image> images = new ArrayList<>();
             final String SQL = "SELECT * FROM momma_db.images";
@@ -63,6 +62,9 @@ public class ImageRepository {
     }
 
     public List<Image> getProductImages (int productId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             ArrayList<Image> images = new ArrayList<>();
             final String SQL = "SELECT * FROM momma_db.images WHERE entity_id = ?";
@@ -100,6 +102,9 @@ public class ImageRepository {
     }
 
     public Image getVendorLogoImage(int vendorId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             ArrayList<Image> images = new ArrayList<>();
             final String SQL = "SELECT * FROM momma_db.images WHERE entity_id = ?";
@@ -136,6 +141,9 @@ public class ImageRepository {
     }
 
     public Image saveImage(Image image, int entityId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if(image != null) {
             try {
                 final String SQL = "INSERT INTO momma_db.images (name_col, url, extension, size_in_bytes, date_added, entity_id) VALUES(?, ?, ?, ?, ?, ?)";
@@ -160,7 +168,7 @@ public class ImageRepository {
                 LOG.error("Failed to save image[" + image + "]", e);
                 return null;
             } finally {
-                DatabaseUtil.close(connection, preparedStatement, resultSet);
+                DatabaseUtil.close(connection, preparedStatement);
             }
         }
         LOG.error("Passed value in [public Image saveImage(Image image)] is [NULL]");
@@ -169,6 +177,8 @@ public class ImageRepository {
 
 
     public Image saveImage(Image image, int entityId, ImageEntityType imageEntityType) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if(image != null && !Objects.equals(image.getBase64String(), "")) {
             try {
                 final String SQL = "INSERT INTO momma_db.images (name_col, url, extension, size_in_bytes, date_added, entity_type, entity_id) VALUES(?, ?, ?, ?, ?, ?,?)";
@@ -193,7 +203,7 @@ public class ImageRepository {
                 LOG.error("Failed to save image[" + image + "]", e);
                 return null;
             } finally {
-                DatabaseUtil.close(connection, preparedStatement, resultSet);
+                DatabaseUtil.close(connection, preparedStatement);
             }
         }
         LOG.error("Passed value in [public Image saveImage(Image image)] is [NULL]");
@@ -201,6 +211,8 @@ public class ImageRepository {
     }
 
     public List<Image> saveImages(List<Image> images, int entityId, ImageEntityType imageEntityType) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if(images != null) {
             try {
                 for(Image image : images) {
@@ -232,7 +244,7 @@ public class ImageRepository {
                 LOG.error("Failed to save image[" + images + "]", e);
                 return null;
             } finally {
-                DatabaseUtil.close(connection, preparedStatement, resultSet);
+                DatabaseUtil.close(connection, preparedStatement);
             }
         }
         LOG.error("Passed value in [public Image saveImage(Image image)] is [NULL]");
@@ -240,6 +252,8 @@ public class ImageRepository {
     }
 
     public void deleteImage(int imageId) throws SQLException {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         try {
             final String SQL = "UPDATE momma_db.images SET is_active = '0', last_updated = ? WHERE id = ? ";
             connection = ConnectionFactory.getConnection();
@@ -256,6 +270,8 @@ public class ImageRepository {
     }
 
     public Image updateImage(Image image) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if(image != null && StringUtils.isNotBlank(image.getBase64String())) {
             try {
                 final String SQL = "UPDATE momma_db.images SET " +
@@ -293,6 +309,9 @@ public class ImageRepository {
     }
 
     public Image getImageById(int imageId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             final String SQL = "SELECT * FROM momma_db.images WHERE id = ?";
             connection = ConnectionFactory.getConnection();
@@ -319,6 +338,8 @@ public class ImageRepository {
         } catch (Exception e) {
             LOG.info("Failed to get image with id[" + imageId + "]", e);
             return null;
+        } finally {
+            DatabaseUtil.close(connection, preparedStatement, resultSet);
         }
     }
 }

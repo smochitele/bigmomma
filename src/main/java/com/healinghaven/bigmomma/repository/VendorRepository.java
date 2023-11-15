@@ -25,9 +25,6 @@ import java.util.List;
 public class VendorRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(VendorRepository.class);
-    private Connection connection;
-    private PreparedStatement preparedStatement;
-    private ResultSet resultSet;
 
     @Autowired
     LocationService locationService;
@@ -39,6 +36,8 @@ public class VendorRepository {
     private ImageService imageService;
 
     public Vendor addVendor(Vendor vendor) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if (vendor != null) {
             try {
                 final String SQL = "INSERT INTO momma_db.vendors (vendor_name, vendor_description, email_address, cellphone_number, vendor_owner) " +
@@ -61,10 +60,9 @@ public class VendorRepository {
 
                 if (vendor.getLocation() != null) {
                     try {
-                        preparedStatement = connection.prepareStatement("SELECT LAST_INSERT_ID()", Statement.RETURN_GENERATED_KEYS);
-                        ResultSet rs = preparedStatement.executeQuery();
+                        ResultSet rs = preparedStatement.getGeneratedKeys();
                         if (rs.next()) {
-                            int vendorId = rs.getInt("LAST_INSERT_ID()");
+                            int vendorId = rs.getInt(1);
                             if (vendor.getLocation() != null)
                                 vendor.setLocation(locationService.setEntityLocation(vendor.getLocation(), vendorId));
 
@@ -83,7 +81,7 @@ public class VendorRepository {
                 LOG.error("Failed to add vendor[" + vendor + "]", e);
                 return null;
             } finally {
-                DatabaseUtil.close(connection, preparedStatement, resultSet);
+                DatabaseUtil.close(connection, preparedStatement);
             }
         } else {
             LOG.warn("Null vendor in the method input[addVendor(Vendor vendor)]");
@@ -93,6 +91,9 @@ public class VendorRepository {
 
     //Gets a vendor belonging to an owner
     public Vendor getOwnersVendor(String ownerEmail) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if (StringUtils.isNotBlank(ownerEmail)) {
             try {
                 final String SQL = "SELECT * FROM momma_db.vendors WHERE vendor_owner = ?";
@@ -135,6 +136,9 @@ public class VendorRepository {
     }
 
     public List<Vendor> getVendors() {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         ArrayList<Vendor> vendors = null;
         try {
             vendors = new ArrayList<>();
@@ -172,6 +176,9 @@ public class VendorRepository {
     }
 
     public Vendor getVendorById(String vendorId, boolean returnProducts) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if (StringUtils.isNotBlank(vendorId)) {
             try {
                 final String SQL = "SELECT * FROM momma_db.vendors WHERE vendor_id = ?";
@@ -215,6 +222,9 @@ public class VendorRepository {
     }
 
     public String getVendorProperty(VendorProperties property, String vendorId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if (StringUtils.isNotBlank(vendorId)) {
             try {
                 final String SQL = "SELECT * FROM momma_db.vendors WHERE vendor_id = ?";
@@ -262,6 +272,8 @@ public class VendorRepository {
 
 
     public Vendor updateVendor(Vendor vendor) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if (vendor != null) {
             try {
                 final String SQL = "UPDATE momma_db.vendors SET " +
@@ -322,6 +334,9 @@ public class VendorRepository {
     }
 
     public Vendor getVendorByName(String vendorName, boolean returnProducts) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if(StringUtils.isNotBlank(vendorName)) {
             vendorName = vendorName.trim();
             try {
