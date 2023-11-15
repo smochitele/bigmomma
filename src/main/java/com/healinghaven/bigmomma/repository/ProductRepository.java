@@ -6,6 +6,7 @@ import com.healinghaven.bigmomma.entity.Product;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.healinghaven.bigmomma.entity.Vendor;
 import com.healinghaven.bigmomma.enums.ImageEntityType;
@@ -28,11 +29,11 @@ public class ProductRepository {
     private ImageService imageService;
     @Autowired
     private VendorService vendorService;
-    private Connection connection;
-    private PreparedStatement preparedStatement;
-    private ResultSet resultSet;
 
     public Product getProductById(int id) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             final String SQL = "SELECT * FROM momma_db.products WHERE id = ? ";
             connection = ConnectionFactory.getConnection();
@@ -81,6 +82,9 @@ public class ProductRepository {
 
 
     public List<Product> getProducts() {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         ArrayList<Product> products = new ArrayList<>();
         try {
             final String SQL = "SELECT * FROM momma_db.products";
@@ -127,6 +131,9 @@ public class ProductRepository {
     }
 
     public List<Product> getProductByCategory(int category) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         ArrayList<Product> products = new ArrayList<>();
         try {
             final String SQL = "SELECT * FROM momma_db.products WHERE category = ? ";
@@ -173,6 +180,9 @@ public class ProductRepository {
     }
 
     public ArrayList<Product> getProductByName(String name) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         ArrayList<Product> products = new ArrayList<>();
         try {
             final String SQL = "SELECT * FROM momma_db.products WHERE name_col like " + "'%" + name + "%'";
@@ -221,6 +231,9 @@ public class ProductRepository {
     }
 
     public List<Product> getVendorProducts(int vendorId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         ArrayList<Product> products = new ArrayList<>();
         try {
             final String SQL = "SELECT * FROM momma_db.products WHERE product_owner = ?";
@@ -253,6 +266,9 @@ public class ProductRepository {
     }
 
     public void deleteProductById(int id) throws SQLException {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             final String SQL = "UPDATE momma_db.products SET is_active = '0', last_updated = ? WHERE id = ? ";
             connection = ConnectionFactory.getConnection();
@@ -270,6 +286,9 @@ public class ProductRepository {
     }
 
     public void updateProduct(Product product) throws SQLException {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             final String SQL = "UPDATE momma_db.products " +
                                 "SET name_col = ?," +
@@ -316,6 +335,8 @@ public class ProductRepository {
     }
 
     public Product saveProduct(Product product) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         try {
             if(product != null) {
                 final String SQL = "INSERT INTO momma_db.products (name_col, description_col, instructions, color, price, best_before, quantity, category, product_owner) " +
@@ -327,13 +348,12 @@ public class ProductRepository {
                 setProductPreparedStatement(preparedStatement,product);
 
                 preparedStatement.execute();
-
+                int productId = 0;
                 try {
                     if(product.getImages() != null) {
-                        preparedStatement = connection.prepareStatement("SELECT LAST_INSERT_ID()", Statement.RETURN_GENERATED_KEYS);
-                        ResultSet rs = preparedStatement.executeQuery();
+                        ResultSet rs = preparedStatement.getGeneratedKeys();
                         if(rs.next()) {
-                            int productId = rs.getInt("LAST_INSERT_ID()");
+                            productId = rs.getInt(1);
                             LOG.info("Saving product images for product[" + productId + "]");
                             imageService.saveImages(product.getImages(), productId, ImageEntityType.PRODUCT_IMAGE);
                         }
@@ -343,7 +363,7 @@ public class ProductRepository {
                 }
 
                 LOG.info("Successfully added product[" + product + "] to DB");
-                return product;
+                return getProductById(productId);
             } else {
                 LOG.error("Cannot save null product to DB");
                 return null;
@@ -357,6 +377,8 @@ public class ProductRepository {
     }
 
     public List<Product> saveAllProducts(List<Product> products) {
+        AtomicReference<Connection> connection = null;
+        AtomicReference<PreparedStatement> preparedStatement = null;
         try {
             if(products != null) {
                 products.forEach(p -> {
@@ -364,19 +386,18 @@ public class ProductRepository {
                         final String SQL = "INSERT INTO momma_db.products (name_col, description_col, instructions, color, price, best_before, quantity, category, product_owner) " +
                                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-                        connection = ConnectionFactory.getConnection();
+                        connection.set(ConnectionFactory.getConnection());
                         LOG.info("Executing query[" + SQL + "]");
                         try {
-                            preparedStatement = connection.prepareStatement(SQL);
-                            setProductPreparedStatement(preparedStatement, p);
+                            preparedStatement.set(connection.get().prepareStatement(SQL));
+                            setProductPreparedStatement(preparedStatement.get(), p);
 
-                            preparedStatement.execute();
+                            preparedStatement.get().execute();
 
                             try {
-                                preparedStatement = connection.prepareStatement("SELECT LAST_INSERT_ID()", Statement.RETURN_GENERATED_KEYS);
-                                ResultSet rs = preparedStatement.executeQuery();
+                                ResultSet rs = preparedStatement.get().getGeneratedKeys();
                                 if(rs.next()) {
-                                    int productId = rs.getInt("LAST_INSERT_ID()");
+                                    int productId = rs.getInt(1);
                                     LOG.info("Saving product images for product[" + productId + "]");
                                     imageService.saveImages(p.getImages(), productId, ImageEntityType.PRODUCT_IMAGE);
                                 }
@@ -402,7 +423,7 @@ public class ProductRepository {
             LOG.error("Failed to save products[" + products + "] to DB", e);
             return null;
         } finally {
-            DatabaseUtil.close(connection, preparedStatement);
+            DatabaseUtil.close(connection.get(), preparedStatement.get());
         }
     }
 

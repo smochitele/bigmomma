@@ -24,12 +24,11 @@ import java.util.List;
 public class UsersRepository {
     private static final Logger LOG = LoggerFactory.getLogger(UsersRepository.class);
 
-    private Connection connection;
-    private PreparedStatement preparedStatement;
-    private ResultSet resultSet;
-
 
     public User getUser(User user) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if(user != null && user.getAccessKey() != null && StringUtils.isNotBlank(user.getEmailAddress())) {
             try {
                 final String checkUserSQL = "SELECT * FROM momma_db.users_auth WHERE user_id = ?";
@@ -56,7 +55,7 @@ public class UsersRepository {
                         //Getting the user from the DB
                         user = getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, user.getEmailAddress());
                         //Updating the last logon to the latest values
-                        updateLastLogon(user, connection, preparedStatement, resultSet);
+                        updateLastLogon(user);
                         //Setting previous logon details to current login
                         user.setAccessKey(lastAccessKey);
                         LOG.info("Returning user[" + user + "] after successful login");
@@ -82,6 +81,9 @@ public class UsersRepository {
     }
 
     public List<User> getUsers() {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         ArrayList<User> users = new ArrayList<>();
         try {
             final String SQL = "SELECT * FROM momma_db.users";
@@ -100,7 +102,7 @@ public class UsersRepository {
                 user.setUserType(UserType.getUserType(resultSet.getInt("user_type")));
                 user.setCellphoneNumber(resultSet.getString("cellphone_number"));
                 user.setActive(resultSet.getBoolean("is_active"));
-                user.setAccessKey(getAccessKey(user.getEmailAddress()));
+                //user.setAccessKey(getAccessKey(user.getEmailAddress()));
 
                 users.add(user);
             }
@@ -120,6 +122,9 @@ public class UsersRepository {
     }
 
     public User getUserByCategory(UserSearchCriteria searchCriteria, String criteriaValue) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if(searchCriteria != null && StringUtils.isNotBlank(criteriaValue)) {
             try {
                 String searchSQL = "";
@@ -175,6 +180,9 @@ public class UsersRepository {
     }
 
     public List<User> getUsersByCategory(UserSearchCriteria searchCriteria, String criteriaValue) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if(searchCriteria != null && StringUtils.isNotBlank(criteriaValue)) {
             ArrayList<User> users = new ArrayList<>();
             try {
@@ -232,7 +240,9 @@ public class UsersRepository {
         }
     }
 
-    private void updateLastLogon(User user, Connection connection, PreparedStatement preparedStatement, ResultSet resultSet) {
+    private void updateLastLogon(User user) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         try {
             LOG.info("Updating last logon for user[" + user + "]");
             final String SQL = "UPDATE momma_db.users_auth " +
@@ -253,11 +263,14 @@ public class UsersRepository {
         } catch (Exception e) {
             LOG.error("Failed to update last logon", e);
         } finally {
-            DatabaseUtil.close(connection, preparedStatement, resultSet);
+            DatabaseUtil.close(connection, preparedStatement);
         }
     }
 
     private AccessKey getAccessKey(String emailAddress) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if(StringUtils.isNotBlank(emailAddress)) {
             try {
                 AccessKey accessKey = null;
@@ -288,6 +301,8 @@ public class UsersRepository {
     }
 
     public User addUser(User user) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if (user != null) {
             try {
                 final String SQL = "INSERT INTO momma_db.users (first_name, last_name, email_address, user_type, date_added, cellphone_number) " +
@@ -324,6 +339,8 @@ public class UsersRepository {
     }
 
     public User updateUser(User user) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if (user != null) {
             if(getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, user.getEmailAddress()) != null) {
                 try {
@@ -369,6 +386,8 @@ public class UsersRepository {
     }
 
     public AccessKey changePassword(AccessKey accessKey) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if (accessKey != null) {
             try {
                 final String SQL = "UPDATE momma_db.users_auth SET " +
@@ -398,6 +417,8 @@ public class UsersRepository {
     }
 
     public void deleteUser(String emailAddress) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if (StringUtils.isNotBlank(emailAddress)) {
             try {
                 final String SQL = "UPDATE momma_db.users SET " +
@@ -418,6 +439,8 @@ public class UsersRepository {
     }
 
     private void setUserAccessKey(User user) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if(user != null) {
             try {
                 final String SQL = "INSERT INTO momma_db.users_auth (user_id, password_col, last_logon_device) VALUES (?,?,?)";
@@ -443,6 +466,9 @@ public class UsersRepository {
     }
 
     public void updateUserType(String emailAddress, UserType userType) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if (StringUtils.isNotBlank(emailAddress) && userType != null) {
             try {
                 final String SQL = "UPDATE momma_db.users SET " +

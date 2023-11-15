@@ -19,11 +19,11 @@ import java.util.List;
 public class LocationRepository {
     private static final Logger LOG = LoggerFactory.getLogger(LocationRepository.class);
 
-    private Connection connection;
-    private PreparedStatement preparedStatement;
-    private ResultSet resultSet;
 
     public Location getEntityLocation(int entityId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             Location location = null;
             String SQL = "SELECT * FROM momma_db.locations WHERE entity_id = ?";
@@ -49,6 +49,8 @@ public class LocationRepository {
     }
 
     public Location setEntityLocation(Location location, int entityId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         if (location != null) {
             try {
                 final String SQL = "INSERT INTO momma_db.locations (city, province, suburb, street_number, longitude, latitude, entity_id) " +
@@ -83,6 +85,8 @@ public class LocationRepository {
     }
 
     public Location updateEntityLocation(Location location, int entityId) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
         try {
             final String SQL = "UPDATE momma_db.locations SET " +
                                "city = ?, " +
@@ -118,6 +122,9 @@ public class LocationRepository {
     }
 
     public List<Location> getLocationsByCriteria(LocationSearchCriteria criteria, String value) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         if(criteria != null && StringUtils.isNotBlank(value)) {
             ArrayList<Location> locations = new ArrayList<>();
             try {
