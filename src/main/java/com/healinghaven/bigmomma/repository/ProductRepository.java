@@ -1,6 +1,7 @@
 package com.healinghaven.bigmomma.repository;
 
 import com.healinghaven.bigmomma.datasource.db.ConnectionFactory;
+import com.healinghaven.bigmomma.entity.Image;
 import com.healinghaven.bigmomma.entity.Product;
 
 import java.sql.*;
@@ -35,43 +36,21 @@ public class ProductRepository {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
-            final String SQL = "SELECT * FROM momma_db.products WHERE id = ? ";
+            final String SQL = """
+                    SELECT *
+                    FROM momma_db.products AS p
+                    INNER JOIN momma_db.images AS i ON p.id = i.entity_id
+                    INNER JOIN momma_db.vendors AS v ON v.vendor_id = p.product_owner
+                    WHERE p.id = ?
+                    """;
             connection = ConnectionFactory.getConnection();
             preparedStatement = connection.prepareStatement(SQL);
             preparedStatement.setInt(1, id);
-
             LOG.info("Executing query[" + SQL + "]");
             resultSet = preparedStatement.executeQuery();
-            Product product = null;
-            if (resultSet.next()) {
-                if(resultSet.getBoolean("is_active")) {
-                    product = new Product();
-                    product.setId(resultSet.getInt("id"));
-                    product.setName(resultSet.getString("name_col"));
-                    product.setDescription(resultSet.getString("description_col"));
-                    product.setInstructions(resultSet.getString("instructions"));
-                    product.setColor(resultSet.getString("color"));
-                    product.setPrice(resultSet.getFloat("price"));
-                    product.setBestBefore((resultSet.getString("best_before")));
-                    product.setQuantity(resultSet.getInt("quantity"));
-                    product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
-                    product.setRating(resultSet.getFloat("rating"));
-                    product.setDateAdded(String.valueOf(resultSet.getDate("date_added")));
-                    product.setVendor(getVendorById(resultSet.getString("product_owner")).getName());
-                    product.setActive(resultSet.getBoolean("is_active"));
-
-                    product.setImages(imageService.getProductImages(product.getId()));
-                    ImageUtil.setBase64StringToImages(product.getImages());
-
-                    LOG.info("Returning product[" + product + "]");
-                } else {
-                    LOG.info("Product with product id[" + id + "] has been found but has an is_active status of[" + resultSet.getBoolean("is_active") + "]");
-                }
-                return product;
-            } else {
-                LOG.error("Product with id [" + id + "] was not found");
-                return null;
-            }
+            Product product = getProductFromResultSet(resultSet);
+            LOG.info("Returning product[" + product + "]");
+            return product;
         } catch (Exception e) {
             LOG.error("Failed to read item id[" + id + "] from db", e);
             return null;
@@ -85,37 +64,22 @@ public class ProductRepository {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        ArrayList<Product> products = new ArrayList<>();
+        ArrayList<Product> products = null;
         try {
-            final String SQL = "SELECT * FROM momma_db.products";
+            final String SQL = """
+                    SELECT *
+                    FROM momma_db.products AS p
+                    INNER JOIN momma_db.images AS i ON p.id = i.entity_id
+                    INNER JOIN momma_db.vendors AS v ON v.vendor_id = p.product_owner
+                    """;
+
             connection = ConnectionFactory.getConnection();
 
             LOG.info("Executing query[" + SQL + "]");
             preparedStatement = connection.prepareStatement(SQL);
             resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                if (resultSet.getBoolean("is_active")) {
-                    Product product = new Product();
-                    product.setId(resultSet.getInt("id"));
-                    product.setName(resultSet.getString("name_col"));
-                    product.setDescription(resultSet.getString("description_col"));
-                    product.setInstructions(resultSet.getString("instructions"));
-                    product.setColor(resultSet.getString("color"));
-                    product.setPrice(resultSet.getFloat("price"));
-                    product.setBestBefore((resultSet.getString("best_before")));
-                    product.setQuantity(resultSet.getInt("quantity"));
-                    product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
-                    product.setRating(resultSet.getFloat("rating"));
-                    product.setDateAdded((String.valueOf(resultSet.getTimestamp("date_added"))));
-                    product.setActive(resultSet.getBoolean("is_active"));
-
-                    product.setImages(imageService.getProductImages(product.getId()));
-                    ImageUtil.setBase64StringToImages(product.getImages());
-
-                    products.add(product);
-                }
-            }
+            products = getProductsFromResultSet(resultSet);
+            assert products != null;
             if (products.size() > 0) {
                 LOG.info("Successfully returned [" + products.size() + "] products");
             } else {
@@ -134,37 +98,22 @@ public class ProductRepository {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        ArrayList<Product> products = new ArrayList<>();
+        ArrayList<Product> products;
         try {
-            final String SQL = "SELECT * FROM momma_db.products WHERE category = ? ";
+            final String SQL = """
+                    SELECT *
+                    FROM momma_db.products AS p
+                    INNER JOIN momma_db.images AS i ON p.id = i.entity_id
+                    INNER JOIN momma_db.vendors AS v ON v.vendor_id = p.product_owner
+                    WHERE p.category = ?
+                    """;
             connection = ConnectionFactory.getConnection();
             LOG.info("Executing query[" + SQL + "]");
             preparedStatement = connection.prepareStatement(SQL);
             preparedStatement.setInt(1, category);
             resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                if(resultSet.getBoolean("is_active")) {
-                    Product product = new Product();
-                    product.setId(resultSet.getInt("id"));
-                    product.setName(resultSet.getString("name_col"));
-                    product.setDescription(resultSet.getString("description_col"));
-                    product.setInstructions(resultSet.getString("instructions"));
-                    product.setColor(resultSet.getString("color"));
-                    product.setPrice(resultSet.getFloat("price"));
-                    product.setBestBefore(DateUtil.getBasicDateFormat(resultSet.getString("best_before")));
-                    product.setQuantity(resultSet.getInt("quantity"));
-                    product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
-                    product.setRating(resultSet.getFloat("rating"));
-                    product.setDateAdded(String.valueOf(resultSet.getDate("date_added")));
-                    product.setVendor(vendorService.getVendorById(String.valueOf(resultSet.getInt("product_owner"))).getName());
-                    product.setActive(resultSet.getBoolean("is_active"));
-
-                    product.setImages(imageService.getProductImages(product.getId()));
-                    ImageUtil.setBase64StringToImages(product.getImages());
-
-                    products.add(product);
-                }
-            }
+            products = getProductsFromResultSet(resultSet);
+            assert products != null;
             if(products.size() > 0) {
                 LOG.info("Successfully returned [" + products.size() + "] products with category [" + category + "]");
             } else {
@@ -185,37 +134,22 @@ public class ProductRepository {
         ResultSet resultSet = null;
         ArrayList<Product> products = new ArrayList<>();
         try {
-            final String SQL = "SELECT * FROM momma_db.products WHERE name_col like " + "'%" + name + "%'";
+             String SQL = """
+                    SELECT *
+                    FROM momma_db.products AS p
+                    INNER JOIN momma_db.images AS i ON p.id = i.entity_id
+                    INNER JOIN momma_db.vendors AS v ON v.vendor_id = p.product_owner
+                    WHERE p.name_col like\s
+                    """;
+            SQL += "'%" + name + "%'";
+
             connection = ConnectionFactory.getConnection();
             LOG.info("Executing query[" + SQL + "]");
             preparedStatement = connection.prepareStatement(SQL);
 
             resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                if(resultSet.getBoolean("is_active")) {
-                    Product product = new Product();
-                    product.setId(resultSet.getInt("id"));
-                    product.setName(resultSet.getString("name_col"));
-                    product.setDescription(resultSet.getString("description_col"));
-                    product.setInstructions(resultSet.getString("instructions"));
-                    product.setColor(resultSet.getString("color"));
-                    product.setPrice(resultSet.getFloat("price"));
-                    product.setBestBefore(DateUtil.getBasicDateFormat(resultSet.getString("best_before")));
-                    product.setQuantity(resultSet.getInt("quantity"));
-                    product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
-                    product.setRating(resultSet.getFloat("rating"));
-                    product.setDateAdded(DateUtil.getFullDateFormat(String.valueOf(resultSet.getDate("date_added"))));
-                    product.setVendor(vendorService.getVendorById(String.valueOf(resultSet.getInt("product_owner"))).getName());
-                    product.setActive(resultSet.getBoolean("is_active"));
-
-                    product.setImages(imageService.getProductImages(product.getId()));
-                    ImageUtil.setBase64StringToImages(product.getImages());
-
-                    products.add(product);
-                } else {
-                    LOG.info("Products with name[" + name + "] found but has an is_active status of [" + resultSet.next() + "]");
-                }
-            }
+            products = getProductsFromResultSet(resultSet);
+            assert products != null;
             if(products.size() > 0) {
                 LOG.info("Successfully returned [" + products.size() + "] products with name [" + name + "]");
             } else {
@@ -234,23 +168,23 @@ public class ProductRepository {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        ArrayList<Product> products = new ArrayList<>();
+        ArrayList<Product> products;
         try {
-            final String SQL = "SELECT * FROM momma_db.products WHERE product_owner = ?";
+            final String SQL = """
+                    SELECT *
+                    FROM momma_db.products AS p
+                    INNER JOIN momma_db.images AS i ON p.id = i.entity_id
+                    INNER JOIN momma_db.vendors AS v ON v.vendor_id = p.product_owner
+                    WHERE p.product_owner = ?
+                    """;
             connection = ConnectionFactory.getConnection();
 
             LOG.info("Executing query[" + SQL + "]");
             preparedStatement = connection.prepareStatement(SQL);
             preparedStatement.setInt(1, vendorId);
             resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                if (resultSet.getBoolean("is_active")) {
-                    Product product = getProductFromResultSet(resultSet);
-
-                    products.add(product);
-                }
-            }
+            products = getProductsFromResultSet(resultSet);
+            assert products != null;
             if (products.size() > 0) {
                 LOG.info("Successfully returned [" + products.size() + "] products belonging to vendor with Id[" + vendorId + "]");
             } else {
@@ -319,7 +253,7 @@ public class ProductRepository {
             preparedStatement.setInt(7, product.getQuantity());
             preparedStatement.setInt(8, product.getCategory().ordinal());
             preparedStatement.setFloat(9, (float) product.getRating());
-            preparedStatement.setInt(10, Integer.valueOf(getVendorByName(product.getName()).getId()));
+            preparedStatement.setInt(10, product.getVendor().getId());
             preparedStatement.setBoolean(11, product.isActive());
             preparedStatement.setString(12, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
             preparedStatement.setString(13, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
@@ -340,7 +274,7 @@ public class ProductRepository {
         try {
             if(product != null) {
                 final String SQL = "INSERT INTO momma_db.products (name_col, description_col, instructions, color, price, best_before, quantity, category, product_owner) " +
-                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                 connection = ConnectionFactory.getConnection();
                 LOG.info("Executing query[" + SQL + "]");
@@ -427,40 +361,6 @@ public class ProductRepository {
         }
     }
 
-    private Product getProductFromResultSet(ResultSet resultSet) {
-        if (resultSet != null) {
-            try {
-                Product product = new Product();
-
-                product.setId(resultSet.getInt("id"));
-                product.setName(resultSet.getString("name_col"));
-                product.setDescription(resultSet.getString("description_col"));
-                product.setInstructions(resultSet.getString("instructions"));
-                product.setColor(resultSet.getString("color"));
-                product.setPrice(resultSet.getFloat("price"));
-                product.setBestBefore((resultSet.getString("best_before")));
-                product.setQuantity(resultSet.getInt("quantity"));
-                product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("category"))));
-                product.setRating(resultSet.getFloat("rating"));
-                product.setDateAdded((String.valueOf(resultSet.getTimestamp("date_added"))));
-                product.setActive(resultSet.getBoolean("is_active"));
-                product.setVendor(getVendorById(resultSet.getString("product_owner")).getName());
-                product.setDateAdded(resultSet.getString("date_added"));
-
-                product.setImages(new ImageRepository().getProductImages(product.getId()));
-                ImageUtil.setBase64StringToImages(product.getImages());
-
-                return product;
-            } catch (Exception e) {
-                LOG.error("Failed to get product from result set", e);
-                return null;
-            }
-        } else {
-            LOG.warn("Result set null, returning a null product");
-            return null;
-        }
-    }
-
     private void setProductPreparedStatement(PreparedStatement preparedStatement, Product p) {
         try {
             preparedStatement.setString(1, p.getName());
@@ -471,19 +371,126 @@ public class ProductRepository {
             preparedStatement.setString(6, p.getBestBefore());
             preparedStatement.setInt(7, p.getQuantity());
             preparedStatement.setInt(8, p.getCategory().ordinal());
-            preparedStatement.setInt(9, Integer.parseInt(getVendorByName(p.getVendor()).getId()));
+            preparedStatement.setInt(9, p.getVendor().getId());
+            preparedStatement.setString(10, p.getVendor().getName());
         } catch (Exception e) {
             LOG.error("Failed to set set up prepared statement", e);
         }
     }
 
+    private ArrayList<Product> getProductsFromResultSet(ResultSet resultSet) {
+        if(resultSet != null) {
+            try {
+                ArrayList<Product> products = new ArrayList<>();
+                while (resultSet.next()) {
+                    if (resultSet.getBoolean("p.is_active")) {
+                        Product product = new Product();
+                        Image image = new Image();
+                        Vendor vendor = new Vendor();
 
-    private Vendor getVendorById(String vendorId) {
-        return new VendorRepository().getVendorById(vendorId, false);
+                        product.setId(resultSet.getInt("p.id"));
+                        product.setName(resultSet.getString("p.name_col"));
+                        product.setDescription(resultSet.getString("p.description_col"));
+                        product.setInstructions(resultSet.getString("p.instructions"));
+                        product.setColor(resultSet.getString("p.color"));
+                        product.setPrice(resultSet.getFloat("p.price"));
+                        product.setBestBefore((resultSet.getString("p.best_before")));
+                        product.setQuantity(resultSet.getInt("p.quantity"));
+                        product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("p.category"))));
+                        product.setRating(resultSet.getFloat("p.rating"));
+                        product.setDateAdded((String.valueOf(resultSet.getTimestamp("p.date_added"))));
+                        product.setActive(resultSet.getBoolean("p.is_active"));
+
+                        image.setId(resultSet.getInt("i.id"));
+                        image.setImageName(resultSet.getString("i.name_col"));
+                        image.setLocation(resultSet.getString("i.url"));
+                        image.setFileExtension(resultSet.getString("i.extension"));
+                        image.setSize(resultSet.getDouble("i.size_in_bytes"));
+                        image.setDateAdded(resultSet.getString("i.date_added"));
+                        image.setImageEntityType(ImageEntityType.PRODUCT_IMAGE);
+
+
+                        vendor.setId(resultSet.getInt("v.vendor_id"));
+                        vendor.setName(resultSet.getString("v.vendor_name"));
+                        vendor.setEmailAddress(resultSet.getString("v.email_address"));
+                        vendor.setCellphoneNumber(resultSet.getString("v.cellphone_number"));
+                        vendor.setDateAdded(resultSet.getString("v.date_added"));
+                        vendor.setDescription(resultSet.getString("v.vendor_description"));
+
+                        if(!products.contains(product)) {
+                            product.setVendor(vendor);
+                            product.setVendor(vendor);
+                            product.addImage(image);
+                            ImageUtil.setBase64StringToImages(image);
+                            products.add(product);
+                        } else {
+                            products.get(products.indexOf(product)).addImage(image);
+                        }
+                    }
+                }
+                return products;
+            } catch (Exception e) {
+                LOG.error("Failed to get products from result set[" + resultSet + "]", e);
+                return null;
+            }
+        } else {
+            LOG.warn("Null resultSet passed in method[private List<Product> getProductsFromResultSet(ResultSet resultSet)]");
+            return null;
+        }
     }
 
+    private Product getProductFromResultSet(ResultSet resultSet) {
+        if(resultSet != null) {
+            try {
+                Product product = new Product();
+                while (resultSet.next()) {
+                    if (resultSet.getBoolean("p.is_active")) {
+                        Image image = new Image();
+                        Vendor vendor = new Vendor();
 
-    private Vendor getVendorByName(String vendorName) {
-        return new VendorRepository().getVendorByName(vendorName, false);
+                        product.setId(resultSet.getInt("p.id"));
+                        product.setName(resultSet.getString("p.name_col"));
+                        product.setDescription(resultSet.getString("p.description_col"));
+                        product.setInstructions(resultSet.getString("p.instructions"));
+                        product.setColor(resultSet.getString("p.color"));
+                        product.setPrice(resultSet.getFloat("p.price"));
+                        product.setBestBefore((resultSet.getString("p.best_before")));
+                        product.setQuantity(resultSet.getInt("p.quantity"));
+                        product.setCategory(ProductCategory.getProductCategory(String.valueOf(resultSet.getInt("p.category"))));
+                        product.setRating(resultSet.getFloat("p.rating"));
+                        product.setDateAdded((String.valueOf(resultSet.getTimestamp("p.date_added"))));
+                        product.setActive(resultSet.getBoolean("p.is_active"));
+
+                        image.setId(resultSet.getInt("i.id"));
+                        image.setImageName(resultSet.getString("i.name_col"));
+                        image.setLocation(resultSet.getString("i.url"));
+                        image.setFileExtension(resultSet.getString("i.extension"));
+                        image.setSize(resultSet.getDouble("i.size_in_bytes"));
+                        image.setDateAdded(resultSet.getString("i.date_added"));
+                        image.setImageEntityType(ImageEntityType.PRODUCT_IMAGE);
+
+
+                        vendor.setId(resultSet.getInt("v.vendor_id"));
+                        vendor.setName(resultSet.getString("v.vendor_name"));
+                        vendor.setEmailAddress(resultSet.getString("v.email_address"));
+                        vendor.setCellphoneNumber(resultSet.getString("v.cellphone_number"));
+                        vendor.setDateAdded(resultSet.getString("v.date_added"));
+                        vendor.setDescription(resultSet.getString("v.vendor_description"));
+
+                        product.setVendor(vendor);
+                        product.setVendor(vendor);
+                        product.addImage(image);
+                        ImageUtil.setBase64StringToImages(image);
+                    }
+                }
+                return product;
+            } catch (Exception e) {
+                LOG.error("Failed to get products from result set[" + resultSet + "]", e);
+                return null;
+            }
+        } else {
+            LOG.warn("Null resultSet passed in method[private List<Product> getProductsFromResultSet(ResultSet resultSet)]");
+            return null;
+        }
     }
 }

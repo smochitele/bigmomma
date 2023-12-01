@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Fee {
+public class Fee extends Entity{
     private double serviceFee;
     private double deliveryFee;
 

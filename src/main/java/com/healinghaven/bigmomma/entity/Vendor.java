@@ -9,8 +9,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Vendor {
-    private String Id;
+public class Vendor extends Entity{
     private String name;
     private String description;
     private String cellphoneNumber;
@@ -22,6 +21,6 @@ public class Vendor {
 
     @Override
     public String toString() {
-        return String.format("Vendor{name[%s], description[%s], owner[%s], location[%s]}", name, description, owner, location);
+        return String.format("Vendor{id [%s] name[%s], description[%s], owner[%s], location[%s]}", id, name, description, owner, location);
     }
 }

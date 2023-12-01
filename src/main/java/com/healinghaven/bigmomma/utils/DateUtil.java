@@ -2,7 +2,6 @@ package com.healinghaven.bigmomma.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.micrometer.common.util.StringUtils;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -67,6 +66,24 @@ public class DateUtil {
         } else {
             LOG.warn("Input date[" + dateInput + "] is not an epoch date");
             return dateInput;
+        }
+    }
+
+    public static long getEpochDate(String dateInput) {
+        if (dateInput != null) {
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date date = df.parse(dateInput);
+                long epoch = date.getTime();
+                LOG.info("Converting date[" + dateInput + "] to epoch date[" + epoch + "]");
+                return epoch;
+            } catch (Exception e) {
+                LOG.error("Failed tp convert date[" + dateInput  + "] to epoch", e);
+                return 0;
+            }
+        } else {
+            LOG.warn("Null date passed in method[public long getEpochDate(String dateInput)] going to return[0]");
+            return 0;
         }
     }
 }

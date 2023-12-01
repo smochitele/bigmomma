@@ -169,7 +169,7 @@ public class LocationRepository {
         try {
             Location location = new Location();
 
-            location.setId(String.valueOf(resultSet.getInt("location_id")));
+            location.setId(resultSet.getInt("location_id"));
             location.setCity(resultSet.getString("city"));
             location.setProvince(resultSet.getString("province"));
             location.setSuburb(resultSet.getString("suburb"));

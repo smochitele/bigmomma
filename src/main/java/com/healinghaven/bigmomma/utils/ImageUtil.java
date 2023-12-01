@@ -1,6 +1,7 @@
 package com.healinghaven.bigmomma.utils;
 
 import com.healinghaven.bigmomma.entity.Image;
+import com.healinghaven.bigmomma.entity.Product;
 import io.micrometer.common.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ public class ImageUtil {
         if(images != null && images.size() > 0) {
             for (Image image : images) {
                 try {
+                    LOG.info("Getting base64 data for image[" + image + "]");
                     File file = new File(image.getLocation());
                     byte[] input = Files.readAllBytes(file.toPath());
                     byte[] encodedBytes = Base64.getEncoder().encode(input);
@@ -28,6 +30,12 @@ public class ImageUtil {
                     LOG.error("Failed to set base64 string for image name[" + image.getLocation() + "] with id[" + image.getId() + "]", e);
                 }
             }
+        }
+    }
+
+    public static void setBase64StringToProductImages(List<Product> products) {
+        for(Product p : products) {
+            setBase64StringToImages(p.getImages());
         }
     }
 

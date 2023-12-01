@@ -95,7 +95,7 @@ public class UsersRepository {
             while (resultSet.next()) {
                 User user = new User();
 
-                user.setUserId(String.valueOf(resultSet.getInt("user_id")));
+                user.setId(resultSet.getInt("user_id"));
                 user.setFirstName(resultSet.getString("first_name"));
                 user.setLastName(resultSet.getString("last_name"));
                 user.setEmailAddress(resultSet.getString("email_address"));
@@ -157,7 +157,7 @@ public class UsersRepository {
                 if(resultSet.next() && resultSet.getBoolean("is_active")) {
                     user = new User();
 
-                    user.setUserId(String.valueOf(resultSet.getInt("user_id")));
+                    user.setId(resultSet.getInt("user_id"));
                     user.setFirstName(resultSet.getString("first_name"));
                     user.setLastName(resultSet.getString("last_name"));
                     user.setEmailAddress(resultSet.getString("email_address"));
@@ -216,7 +216,7 @@ public class UsersRepository {
                 while(resultSet.next() && resultSet.getBoolean("is_active")) {
                     user = new User();
 
-                    user.setUserId(String.valueOf(resultSet.getInt("user_id")));
+                    user.setId(resultSet.getInt("user_id"));
                     user.setFirstName(resultSet.getString("first_name"));
                     user.setLastName(resultSet.getString("last_name"));
                     user.setEmailAddress(resultSet.getString("email_address"));

@@ -14,10 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -108,16 +106,15 @@ public class VendorRepository {
                 if (resultSet.next() && resultSet.getBoolean("is_active")) {
                     vendor = new Vendor();
 
-                    vendor.setId(resultSet.getString("vendor_id"));
+                    vendor.setId(resultSet.getInt("vendor_id"));
                     vendor.setName(resultSet.getString("vendor_name"));
                     vendor.setEmailAddress(resultSet.getString("email_address"));
                     vendor.setCellphoneNumber(resultSet.getString("cellphone_number"));
                     vendor.setOwner(new UsersRepository().getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, resultSet.getString("vendor_owner")));
-                    vendor.setLocation(locationService.getEntityLocation(Integer.parseInt(vendor.getId())));
+                    vendor.setLocation(locationService.getEntityLocation(vendor.getId()));
                     vendor.setDescription(resultSet.getString("vendor_description"));
-                    vendor.setLogo(imageService.getImageById(Integer.parseInt(vendor.getId())));
-                    vendor.setProducts(new ProductRepository().getVendorProducts(Integer.parseInt(vendor.getId())));
-                    vendor.getProducts().forEach(p -> p.setVendor(vendor.getName()));
+                    vendor.setLogo(imageService.getImageById(vendor.getId()));
+                    vendor.setProducts(new ProductRepository().getVendorProducts(vendor.getId()));
                 } else {
                     vendor = null;
                 }
@@ -149,19 +146,18 @@ public class VendorRepository {
             LOG.info("Executing query[" + SQL + "]");
 
             resultSet = preparedStatement.executeQuery();
-
             while (resultSet.next() && resultSet.getBoolean("is_active")) {
                 Vendor vendor = new Vendor();
 
-                vendor.setId(resultSet.getString("vendor_id"));
+                vendor.setId(resultSet.getInt("vendor_id"));
                 vendor.setName(resultSet.getString("vendor_name"));
                 vendor.setEmailAddress(resultSet.getString("email_address"));
                 vendor.setCellphoneNumber(resultSet.getString("cellphone_number"));
                 vendor.setOwner(new UsersRepository().getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, resultSet.getString("vendor_owner")));
-                vendor.setLocation(locationService.getEntityLocation(Integer.parseInt(vendor.getId())));
+                vendor.setLocation(locationService.getEntityLocation(vendor.getId()));
                 vendor.setDescription(resultSet.getString("vendor_description"));
-                vendor.setLogo(imageService.getImageById(Integer.parseInt(vendor.getId())));
-                vendor.setProducts(new ProductRepository().getVendorProducts(Integer.parseInt(vendor.getId())));
+                vendor.setLogo(imageService.getImageById(vendor.getId()));
+                vendor.setProducts(new ProductRepository().getVendorProducts(vendor.getId()));
 
                 vendors.add(vendor);
             }
@@ -189,24 +185,24 @@ public class VendorRepository {
                 preparedStatement.setString(1, vendorId);
                 LOG.info("Executing query[" + SQL + "]");
                 resultSet = preparedStatement.executeQuery();
-                Vendor vendor;
+                Vendor vendor = null;
                 if (resultSet.next() && resultSet.getBoolean("is_active")) {
                     vendor = new Vendor();
 
-                    vendor.setId(resultSet.getString("vendor_id"));
+                    vendor.setId(resultSet.getInt("vendor_id"));
                     vendor.setName(resultSet.getString("vendor_name"));
                     vendor.setEmailAddress(resultSet.getString("email_address"));
                     vendor.setCellphoneNumber(resultSet.getString("cellphone_number"));
                     vendor.setOwner(new UsersRepository().getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, resultSet.getString("vendor_owner")));
                     vendor.setDescription(resultSet.getString("vendor_description"));
-                    vendor.setLocation(new LocationRepository().getEntityLocation(Integer.parseInt(vendor.getId())));
-                    vendor.setLogo(new ImageRepository().getImageById(Integer.parseInt(vendor.getId())));
+                    vendor.setLocation(new LocationRepository().getEntityLocation(vendor.getId()));
+                    vendor.setLogo(new ImageRepository().getImageById(vendor.getId()));
                     if(returnProducts)
-                        vendor.setProducts(new ProductRepository().getVendorProducts(Integer.parseInt(vendor.getId())));
+                        vendor.setProducts(new ProductRepository().getVendorProducts(vendor.getId()));
                 } else {
-                    vendor = null;
+                    LOG.error("Vendor with id[" + vendorId + "] was not found on the DB");
+                    return null;
                 }
-
                 LOG.info("Returning vendor[" + vendor + "]");
                 return vendor;
             } catch (Exception e) {
@@ -293,13 +289,13 @@ public class VendorRepository {
                 preparedStatement.setString(3, vendor.getEmailAddress());
                 preparedStatement.setString(4, vendor.getCellphoneNumber());
                 preparedStatement.setString(5, DateUtil.getHistoryDateFormat(String.valueOf(System.currentTimeMillis())));
-                preparedStatement.setString(6, vendor.getId());
+                preparedStatement.setInt(6, vendor.getId());
 
                 LOG.info("Executing query[" + SQL + "]");
 
                 preparedStatement.execute();
 
-                vendor.setLocation(locationService.updateEntityLocation(vendor.getLocation(), Integer.parseInt(vendor.getId())));
+                vendor.setLocation(locationService.updateEntityLocation(vendor.getLocation(), vendor.getId()));
                 vendor.setLogo(imageService.updateImage(vendor.getLogo()));
                 return vendor;
             } catch (Exception e) {
@@ -352,16 +348,16 @@ public class VendorRepository {
                 if(resultSet.next() && resultSet.getBoolean("is_active")) {
                     vendor = new Vendor();
 
-                    vendor.setId(resultSet.getString("vendor_id"));
+                    vendor.setId(resultSet.getInt("vendor_id"));
                     vendor.setName(resultSet.getString("vendor_name"));
                     vendor.setEmailAddress(resultSet.getString("email_address"));
                     vendor.setCellphoneNumber(resultSet.getString("cellphone_number"));
                     vendor.setOwner(new UsersRepository().getUserByCategory(UserSearchCriteria.EMAIL_ADDRESS, resultSet.getString("email_address")));
                     vendor.setDescription(resultSet.getString("vendor_description"));
-                    vendor.setLocation(new LocationRepository().getEntityLocation(Integer.parseInt(vendor.getId())));
-                    vendor.setLogo(new ImageRepository().getImageById(Integer.parseInt(vendor.getId())));
+                    vendor.setLocation(new LocationRepository().getEntityLocation(vendor.getId()));
+                    vendor.setLogo(new ImageRepository().getImageById(vendor.getId()));
                     if (returnProducts)
-                        vendor.setProducts(new ProductRepository().getVendorProducts(Integer.parseInt(vendor.getId())));
+                        vendor.setProducts(new ProductRepository().getVendorProducts(vendor.getId()));
                 } else {
                     vendor = null;
                 }
