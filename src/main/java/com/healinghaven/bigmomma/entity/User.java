@@ -11,8 +11,7 @@ import java.util.HashMap;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
-    private String userId;
+public class User extends Entity{
     private String firstName;
     private String lastName;
     private String emailAddress;
@@ -24,6 +23,6 @@ public class User {
 
     @Override
     public String toString() {
-        return String.format("User{id[%s], firstName[%s], lastName[%s], emailAddress[%s], cellphoneNumber[%s], userType[%s]}", userId, firstName, lastName, emailAddress, cellphoneNumber, userType);
+        return String.format("User{id[%s], firstName[%s], lastName[%s], emailAddress[%s], cellphoneNumber[%s], userType[%s]}", id, firstName, lastName, emailAddress, cellphoneNumber, userType);
     }
 }

@@ -2,13 +2,14 @@ package com.healinghaven.bigmomma.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Location {
-    private String id;
+public class Location extends Entity{
     private String province;
     private String city;
     private String suburb;

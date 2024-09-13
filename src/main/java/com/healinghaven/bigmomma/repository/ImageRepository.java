@@ -86,6 +86,7 @@ public class ImageRepository {
                     image.setFileExtension(resultSet.getString("extension"));
                     image.setSize(resultSet.getDouble("size_in_bytes"));
                     image.setDateAdded(resultSet.getString("date_added"));
+                    image.setEntityBelongingTo(resultSet.getInt("entity_id"));
                     image.setImageEntityType(ImageEntityType.PRODUCT_IMAGE);
 
                     images.add(image);

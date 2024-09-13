@@ -1,7 +1,6 @@
 package com.healinghaven.bigmomma.entity;
 
-public class Sale {
-    private String Id;
+public class Sale extends Entity{
     private String date;
     private Fee fees;
     private double totalAmount;
